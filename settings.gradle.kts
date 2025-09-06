@@ -21,6 +21,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "android-library-template"
+rootProject.name = "android-strict-shared-preferences"
 include(":app")
 include(":library")
