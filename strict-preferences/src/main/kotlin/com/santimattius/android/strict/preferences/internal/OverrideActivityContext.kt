@@ -5,7 +5,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
 import android.os.Bundle
-import com.santimattius.android.strict.preferences.StrictContext
+import com.santimattius.android.strict.preferences.internal.StrictContext
 
 /**
  * An [android.app.Application.ActivityLifecycleCallbacks] that overrides the base context of an [Activity]

@@ -5,6 +5,7 @@ import android.content.Context
 import android.os.Build
 import android.os.StrictMode
 import android.util.Log
+import com.santimattius.android.strict.preferences.internal.StrictContext
 
 /**
  * Base [Application] class that enables [StrictMode] and initializes [com.santimattius.android.strict.preferences.internal.StrictSharedPreferences].
@@ -14,7 +15,7 @@ import android.util.Log
  * @property isDebug Whether the application is in debug mode. This controls [StrictMode] behavior
  * and [com.santimattius.android.strict.preferences.internal.StrictSharedPreferences] logging.
  */
-abstract class StrictModeApplication(
+abstract class StrictPreferencesApplication(
     private val isDebug: Boolean = false
 ) : Application(), StrictPreferencesStartup {
 
@@ -52,7 +53,7 @@ abstract class StrictModeApplication(
     }
 
     /**
-     * Attaches the base context to the application, wrapping it with [StrictContext].
+     * Attaches the base context to the application, wrapping it with [com.santimattius.android.strict.preferences.internal.StrictContext].
      *
      * @param base The new base context for this wrapper.
      */

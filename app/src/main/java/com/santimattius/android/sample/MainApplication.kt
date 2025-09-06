@@ -1,5 +1,25 @@
 package com.santimattius.android.sample
 
-import com.santimattius.android.strict.preferences.StrictModeApplication
+import android.util.Log
+import com.santimattius.android.strict.preferences.StrictPreferences
+import com.santimattius.android.strict.preferences.StrictPreferencesApplication
+import com.santimattius.android.strict.preferences.StrictPreferencesConfiguration
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 
-class MainApplication : StrictModeApplication(isDebug = true)
+class MainApplication : StrictPreferencesApplication(isDebug = true) {
+
+    private val coroutineScope = CoroutineScope(Dispatchers.Default)
+
+    override fun onCreate() {
+        super.onCreate()
+        StrictPreferences.watch(coroutineScope) {
+            Log.d("MainApplication", "$it")
+        }
+
+    }
+
+    override fun getConfiguration(): StrictPreferencesConfiguration {
+        return super.getConfiguration().copy(emitMainThreadAccessEvents = true)
+    }
+}

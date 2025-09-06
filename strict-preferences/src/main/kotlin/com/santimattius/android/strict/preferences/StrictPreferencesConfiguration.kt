@@ -4,7 +4,8 @@ data class StrictPreferencesConfiguration(
     val isDebug: Boolean,
     val isMetricEnabled: Boolean = true,
     val setupMode: SetupMode = SetupMode.AUTOMATIC,
-    val overrideMode: OverrideMode = OverrideMode.ALL
+    val overrideMode: OverrideMode = OverrideMode.ALL,
+    val emitMainThreadAccessEvents: Boolean = false // Added new flag
 )
 
 enum class OverrideMode {

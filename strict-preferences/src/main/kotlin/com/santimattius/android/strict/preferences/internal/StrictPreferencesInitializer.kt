@@ -1,21 +1,22 @@
-package com.santimattius.android.strict.preferences
+package com.santimattius.android.strict.preferences.internal
 
 import android.app.Application
 import android.content.Context
 import android.util.Log
 import androidx.startup.Initializer
-import com.santimattius.android.strict.preferences.internal.OverrideActivityContext
-import com.santimattius.android.strict.preferences.internal.StrictSharedPreferences
+import com.santimattius.android.strict.preferences.SetupMode
+import com.santimattius.android.strict.preferences.StrictPreferencesApplication
+import com.santimattius.android.strict.preferences.StrictPreferencesStartup
 
 /**
- * Initializes [com.santimattius.android.strict.preferences.internal.StrictSharedPreferences] by registering an activity lifecycle callback
+ * Initializes [StrictSharedPreferences] by registering an activity lifecycle callback
  * to override the context in activities and optionally overriding the default SharedPreferences
- * instance in [androidx.preference.PreferenceManager] if the application implements [StrictModeApplication].
+ * instance in [androidx.preference.PreferenceManager] if the application implements [com.santimattius.android.strict.preferences.StrictPreferencesApplication].
  */
 class StrictPreferencesInitializer : Initializer<Unit> {
 
     /**
-     * Initializes [com.santimattius.android.strict.preferences.internal.StrictSharedPreferences] in the application.
+     * Initializes [StrictSharedPreferences] in the application.
      *
      * @param context The application context.
      */
@@ -27,7 +28,7 @@ class StrictPreferencesInitializer : Initializer<Unit> {
             if (context is Application) {
                 context.registerActivityLifecycleCallbacks(OverrideActivityContext())
             }
-            if (context is StrictModeApplication) {
+            if (context is StrictPreferencesApplication) {
                 overridePreferenceManager(context)
             }
         }
