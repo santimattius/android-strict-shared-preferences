@@ -23,4 +23,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "android-strict-shared-preferences"
 include(":app")
-include(":library")
+include(":strict-preferences")
