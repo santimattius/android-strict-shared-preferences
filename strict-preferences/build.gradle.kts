@@ -12,7 +12,7 @@ val libraryArtifactId: String by project
 val libraryVersion: String by project
 
 android {
-    namespace = "com.santimattius.android.library"
+    namespace = "com.santimattius.android.strict.preferences"
     compileSdk = androidTargetSdkVersion.toInt()
 
     defaultConfig {
@@ -44,6 +44,7 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
+    implementation(libs.androidx.startup.runtime)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

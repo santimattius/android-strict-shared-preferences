@@ -10,6 +10,7 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
+        android:name=".MainApplication"
         android:theme="@style/Theme.Sample"
         tools:targetApi="31">
         <activity
@@ -23,6 +24,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".AnrTestActivity"
+            android:exported="true"
+            android:label="ANR Test Activity" />
     </application>
 
 </manifest>
