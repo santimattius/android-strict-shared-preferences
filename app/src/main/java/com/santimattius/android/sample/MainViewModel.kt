@@ -5,8 +5,12 @@ import android.content.SharedPreferences
 import androidx.core.content.edit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 data class MainUiState(
     val text: String = "",
@@ -25,15 +29,22 @@ class MainViewModel(
     }
 
     private fun initializeUiState() {
-        _state.value = _state.value.copy(
-            text = "Android Shared Preferences",
-            isEnabled = sharedPreferences.getBoolean("is_enabled", false)
-        )
+        viewModelScope.launch {
+            _state.value = _state.value.copy(
+                text = "Android Shared Preferences",
+                isEnabled = sharedPreferences.getBoolean("is_enabled", false)
+            )
+        }
     }
 
     fun onCheckedChange(isEnabled: Boolean) {
-        _state.value = _state.value.copy(isEnabled = isEnabled)
-        sharedPreferences.edit { putBoolean("is_enabled", isEnabled) }
+        viewModelScope.launch {
+            _state.value = _state.value.copy(isEnabled = isEnabled)
+            //TODO: change to IO dispatcher
+            withContext(Dispatchers.IO){
+                sharedPreferences.edit { putBoolean("is_enabled", isEnabled) }
+            }
+        }
     }
 
     class Factory(

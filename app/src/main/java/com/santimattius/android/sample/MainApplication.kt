@@ -1,13 +1,16 @@
 package com.santimattius.android.sample
 
+import android.app.Application
 import android.util.Log
 import com.santimattius.android.strict.preferences.StrictPreferences
-import com.santimattius.android.strict.preferences.StrictPreferencesApplication
 import com.santimattius.android.strict.preferences.StrictPreferencesConfiguration
+import com.santimattius.android.strict.preferences.StrictPreferencesStartup
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 
-class MainApplication : StrictPreferencesApplication(isDebug = true) {
+// If need enable strict mode
+// class MainApplication : StrictPreferencesApplication(isDebug = true)
+class MainApplication : Application(), StrictPreferencesStartup {
 
     private val coroutineScope = CoroutineScope(Dispatchers.Default)
 
