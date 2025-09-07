@@ -1,12 +1,19 @@
-# {{Library Name}}
-This is a library description.
+# Strict Preferences
 
-# Features
+## 1. Introduction
 
-- **Feature 1:** Description of feature 1.
--
+StrictPreferences is an Android library designed to help developers detect and diagnose SharedPreferences access on the main application thread. Accessing SharedPreferences (especially for write operations or complex reads) on the main thread can lead to UI freezes and "Application Not Responding" (ANR) errors, negatively impacting user experience.
 
-# Installation
+This library provides:
+*   Automatic detection of SharedPreferences calls on the main thread.
+*   Configurable responses to main thread access:
+    *   Logging warnings to Logcat.
+    *   Triggering `StrictMode.noteSlowCall()` in debug builds.
+    *   Emitting detailed events for custom handling or analytics.
+*   Easy setup and integration into your Android application.
+
+## 2. Getting Started & Setup
+### Installation
 
 You can add this library to your Android project using Gradle. Make sure to include the repository in your project-level `build.gradle` file:
 
@@ -32,21 +39,6 @@ dependencies {
 
 Replace `version` with the latest version of the library.
 
-# Usage
-
-## 1. Introduction
-
-StrictPreferences is an Android library designed to help developers detect and diagnose SharedPreferences access on the main application thread. Accessing SharedPreferences (especially for write operations or complex reads) on the main thread can lead to UI freezes and "Application Not Responding" (ANR) errors, negatively impacting user experience.
-
-This library provides:
-*   Automatic detection of SharedPreferences calls on the main thread.
-*   Configurable responses to main thread access:
-    *   Logging warnings to Logcat.
-    *   Triggering `StrictMode.noteSlowCall()` in debug builds.
-    *   Emitting detailed events for custom handling or analytics.
-*   Easy setup and integration into your Android application.
-
-## 2. Getting Started & Setup
 
 There are two primary ways to initialize the StrictPreferences library:
 
