@@ -4,7 +4,7 @@ import android.app.Application
 import android.content.Context
 import android.util.Log
 import androidx.startup.Initializer
-import com.santimattius.android.strict.preferences.SetupMode
+import com.santimattius.android.strict.preferences.StrictPreferences
 import com.santimattius.android.strict.preferences.StrictPreferencesApplication
 import com.santimattius.android.strict.preferences.StrictPreferencesStartup
 
@@ -23,7 +23,6 @@ class StrictPreferencesInitializer : Initializer<Unit> {
     override fun create(context: Context) {
         if (context is StrictPreferencesStartup) {
             val configuration = context.getConfiguration()
-            if (configuration.setupMode == SetupMode.MANUAL) return
             StrictSharedPreferences.setConfiguration(configuration)
             if (context is Application) {
                 context.registerActivityLifecycleCallbacks(OverrideActivityContext())
@@ -31,6 +30,7 @@ class StrictPreferencesInitializer : Initializer<Unit> {
             if (context is StrictPreferencesApplication) {
                 overridePreferenceManager(context)
             }
+            StrictPreferences.startupInit()
         }
     }
 
@@ -52,7 +52,7 @@ class StrictPreferencesInitializer : Initializer<Unit> {
             field.isAccessible = true
             field.set(null, prefs)
         } catch (e: Exception) {
-            Log.w("StrictPreferencesInitializer", "Error overriding PreferenceManager", e)
+            Log.w(LIB_TAG, "Error overriding PreferenceManager", e)
         }
     }
 }

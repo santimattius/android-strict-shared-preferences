@@ -13,13 +13,14 @@ class MainApplication : StrictPreferencesApplication(isDebug = true) {
 
     override fun onCreate() {
         super.onCreate()
+        //TODO: Manual start
+        //StrictPreferences.start(this)
         StrictPreferences.watch(coroutineScope) {
             Log.d("MainApplication", "$it")
         }
-
     }
 
     override fun getConfiguration(): StrictPreferencesConfiguration {
-        return super.getConfiguration().copy(emitMainThreadAccessEvents = true)
+        return super.getConfiguration().copy(emitMainThreadAccessEvents = false)
     }
 }

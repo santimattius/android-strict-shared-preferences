@@ -4,7 +4,8 @@ This is a library description.
 # Features
 
 - **Feature 1:** Description of feature 1.
-- 
+-
+
 # Installation
 
 You can add this library to your Android project using Gradle. Make sure to include the repository in your project-level `build.gradle` file:
@@ -23,12 +24,13 @@ Then, add the dependency in your `build.gradle` file at the application level:
 
 ```groovy
 dependencies {
-   implementation "module:${version}"
+   implementation "com.github.santimattius:android-strict-shared-preferences:${version}"
+   // or implementation "your-group:strict-preferences:${version}" if hosted elsewhere
 }
 
 ```
 
-Replace `version` with the version of the library you want to use.
+Replace `version` with the latest version of the library.
 
 # Usage
 
@@ -46,125 +48,45 @@ This library provides:
 
 ## 2. Getting Started & Setup
 
-### 2.1. Initializing the Library
+There are two primary ways to initialize the StrictPreferences library:
 
-The library needs to be initialized early in your application's lifecycle, typically within your `Application.onCreate()` method or through an AndroidX App Startup Initializer that you define.
+### Method 1: Automatic Initialization via AndroidX App Startup (Recommended)
 
-**Option A: Manual Initialization in `Application.onCreate()` (Recommended for most cases)**
-
-This is the most straightforward way to initialize the library.
-```kotlin
-// In your Application class
-import com.santimattius.android.strict.preferences.StrictPreferences
-import com.santimattius.android.strict.preferences.StrictPreferencesConfiguration // If customizing
-import com.santimattius.android.strict.preferences.internal.StrictPreferencesInitializer // Used by StrictPreferences.start
-
-class MyApplication : Application() {
-    override fun onCreate() {
-        super.onCreate()
-
-        // Basic initialization
-        StrictPreferences.start(this)
-
-        // For more advanced configuration (see section 3)
-        // You can provide a custom configuration when the library is initialized by App Startup
-        // or by directly setting it if manual setup is preferred (less common for initial setup).
-        // The library's StrictPreferencesInitializer will attempt to find a
-        // StrictPreferencesStartup provider.
-    }
-}
-```
-The `StrictPreferences.start(context)` method ensures that the library's internal `StrictPreferencesInitializer` is run. This initializer sets up the necessary hooks for monitoring SharedPreferences access, including an `ActivityLifecycleCallbacks` to wrap Activity contexts.
-
-**Option B: Using a Custom AndroidX App Startup Initializer**
-
-If you prefer to manage initialization solely through App Startup, you can create your own `Initializer` that depends on `StrictPreferencesInitializer` or directly configures the library.
-
-```kotlin
-// Example: Your custom App Startup Initializer
-import android.content.Context
-import androidx.startup.Initializer
-import com.santimattius.android.strict.preferences.StrictPreferences
-import com.santimattius.android.strict.preferences.StrictPreferencesConfiguration
-import com.santimattius.android.strict.preferences.StrictPreferencesStartup
-import com.santimattius.android.strict.preferences.internal.StrictSharedPreferences // For direct configuration
-import android.util.Log // Added for Log.i
-
-// 1. Define your configuration provider (Optional, if customizing)
-class MyStrictPreferencesConfigProvider : StrictPreferencesStartup {
-    override fun getConfiguration(): StrictPreferencesConfiguration {
-        return StrictPreferencesConfiguration(
-            isDebug = BuildConfig.DEBUG, // Example: Link to your app's debug state
-            emitMainThreadAccessEvents = true
-        )
-    }
-}
-
-// 2. Create an Initializer that sets the configuration
-class MyAppStrictPrefsInitializer : Initializer<Unit> {
-    override fun create(context: Context) {
-        // Option 2.1: If you have a StrictPreferencesStartup provider,
-        // AppInitializer will pick it up automatically if it's discoverable.
-        // StrictPreferences.start(context) will ensure initialization.
-
-        // Option 2.2: For very direct control (less common for initial setup)
-        // You can get the configuration from your provider and set it.
-        // This is generally handled by the library's own initializer if a provider exists.
-        val customConfig = MyStrictPreferencesConfigProvider().getConfiguration()
-        StrictSharedPreferences.setConfiguration(customConfig) // Accessing internal but public static method
-
-        // Ensure the main library hooks are set up
-        StrictPreferences.start(context)
-
-        Log.i("MyAppStrictPrefs", "StrictPreferences configured and started via App Startup.")
-    }
-
-    override fun dependencies(): List<Class<out Initializer<*>>> {
-        // If StrictPreferences had its own discoverable Initializer you'd list it here.
-        // For now, StrictPreferences.start() handles its internal initializer.
-        return emptyList()
-    }
-}
-```
-Remember to add your Initializer to your `AndroidManifest.xml` providers section.
-
-## 3. Configuration
-
-You can customize the behavior of StrictPreferences using the `StrictPreferencesConfiguration` data class.
-
-**`StrictPreferencesConfiguration` fields:**
-
-*   `isDebug: Boolean`:
-    *   If `true`, main thread access will trigger `StrictMode.noteSlowCall()`.
-    *   If `false` (default), main thread access will log a warning to Logcat.
-*   `emitMainThreadAccessEvents: Boolean`:
-    *   If `true` (default is `false`), the library will emit `MainThreadAccessEvent` objects when main thread access is detected. These events can be observed using `StrictPreferences.watch()`.
-
-**Providing Configuration:**
-
-The primary way to provide an initial configuration is by creating a class that implements the `StrictPreferencesStartup` interface. The library's `StrictPreferencesInitializer` (run by `StrictPreferences.start()`) will look for an implementation of this interface via App Startup's component discovery mechanism.
+This method leverages AndroidX App Startup for automatic initialization and configuration.
 
 **Step 1: Implement `StrictPreferencesStartup`**
-```kotlin
-package com.example.myapp // Your app's package
 
+Your `Application` class (or another class discoverable by App Startup) needs to implement the `StrictPreferencesStartup` interface to provide the desired configuration.
+
+```kotlin
+package com.example.myapp
+
+import android.app.Application
 import com.santimattius.android.strict.preferences.StrictPreferencesConfiguration
 import com.santimattius.android.strict.preferences.StrictPreferencesStartup
 // import com.example.myapp.BuildConfig // Assuming your BuildConfig is here
 
-class MyAppStrictPreferencesConfigurationProvider : StrictPreferencesStartup {
+class MyApplication : Application(), StrictPreferencesStartup {
+
+    override fun onCreate() {
+        super.onCreate()
+        // No need to call StrictPreferences.start() here, App Startup handles it.
+    }
+
     override fun getConfiguration(): StrictPreferencesConfiguration {
         return StrictPreferencesConfiguration(
-            // isDebug = BuildConfig.DEBUG, // Tie to your app's debug status
-            isDebug = true, // Example, replace with BuildConfig.DEBUG
-            emitMainThreadAccessEvents = true // Enable event emission
+            isDebug = BuildConfig.DEBUG, // Tie to your app's debug status
+            emitMainThreadAccessEvents = true // Example: Enable event emission
         )
     }
 }
 ```
-**Step 2: Make it discoverable by App Startup**
 
-You need to declare your `StrictPreferencesStartup` implementation as a metadata provider in your `AndroidManifest.xml` so that the `StrictPreferencesInitializer` can find it.
+**Step 2: Ensure Library's Initializer is in Manifest**
+
+The StrictPreferences library should include its `StrictPreferencesInitializer` in its `AndroidManifest.xml`, which will be merged into your app's manifest. This initializer will automatically find your `StrictPreferencesStartup` implementation.
+
+If you need to ensure it's present or manage its discovery, your merged `AndroidManifest.xml` should effectively include:
 ```xml
 <manifest xmlns:tools="http://schemas.android.com/tools" ...>
     <application ...>
@@ -173,52 +95,130 @@ You need to declare your `StrictPreferencesStartup` implementation as a metadata
             android:authorities="${applicationId}.androidx-startup"
             android:exported="false"
             tools:node="merge">
-            <!-- Your StrictPreferencesStartup implementation -->
+
+            <!-- Your Application class implementing StrictPreferencesStartup -->
             <meta-data
-                android:name="com.example.myapp.MyAppStrictPreferencesConfigurationProvider"
+                android:name="com.example.myapp.MyApplication"
                 android:value="androidx.startup" />
 
             <!-- The library's own initializer, which will use your provider if found -->
-             <meta-data
+            <!-- Ensure this is present if not automatically merged or if overriding discovery -->
+            <meta-data
                 android:name="com.santimattius.android.strict.preferences.internal.StrictPreferencesInitializer"
                 android:value="androidx.startup" />
         </provider>
     </application>
 </manifest>
 ```
-If `StrictPreferencesInitializer` finds your `MyAppStrictPreferencesConfigurationProvider`, it will use the `StrictPreferencesConfiguration` you return. Otherwise, it uses a default configuration.
+*(Note: The exact meta-data name for your `Application` class might vary if you use a different class for `StrictPreferencesStartup`)*
 
-**Direct Configuration (Advanced/Less Common for Initial Setup):**
-While `StrictPreferencesStartup` is preferred for initial configuration, you can also set the configuration directly using:
-```kotlin
-val customConfig = StrictPreferencesConfiguration(isDebug = true, emitMainThreadAccessEvents = true)
-StrictSharedPreferences.setConfiguration(customConfig)
-// or for just debug mode:
-// StrictSharedPreferences.setDebugMode(true)
+With this setup, the library initializes automatically using your provided configuration.
+
+### Method 2: Manual Initialization
+
+If you prefer to control initialization explicitly or cannot use App Startup's auto-initialization.
+
+**Step 1: Remove or Disable Automatic Initialization**
+
+You *must* prevent the library's `StrictPreferencesInitializer` from running automatically. You can do this by adding a `tools:node="remove"` attribute to its entry in your app's `AndroidManifest.xml`:
+
+```xml
+<manifest xmlns:tools="http://schemas.android.com/tools" ...>
+    <application ...>
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+
+            <!-- Remove the library's default initializer to prevent auto-startup -->
+            <meta-data
+                android:name="com.santimattius.android.strict.preferences.internal.StrictPreferencesInitializer"
+                android:value="androidx.startup"
+                tools:node="remove" />
+        </provider>
+    </application>
+</manifest>
 ```
-This is an internal API (`StrictSharedPreferences.Companion`) but is public. It's more useful for dynamic changes or testing rather than initial setup.
 
+**Step 2: Implement `StrictPreferencesStartup` and Call `StrictPreferences.start()`**
+
+Your `Application` class should implement `StrictPreferencesStartup` and explicitly call `StrictPreferences.start()` in its `onCreate()` method.
+
+```kotlin
+package com.example.myapp
+
+import android.app.Application
+import com.santimattius.android.strict.preferences.StrictPreferences
+import com.santimattius.android.strict.preferences.StrictPreferencesConfiguration
+import com.santimattius.android.strict.preferences.StrictPreferencesStartup
+// import com.example.myapp.BuildConfig
+
+class MyApplication : Application(), StrictPreferencesStartup {
+
+    override fun onCreate() {
+        super.onCreate()
+
+        // Manual initialization
+        StrictPreferences.start(this)
+    }
+
+    override fun getConfiguration(): StrictPreferencesConfiguration {
+        // Provide your custom configuration here
+        return StrictPreferencesConfiguration(
+            isDebug = BuildConfig.DEBUG,
+            emitMainThreadAccessEvents = true
+        )
+    }
+}
+```
+In this manual setup, `StrictPreferences.start(this)` invokes `StrictPreferencesInitializer`, which then attempts to get the configuration from the passed `Context` (your `Application` instance) if it implements `StrictPreferencesStartup`.
+
+## 3. Configuration Details
+
+The `StrictPreferencesConfiguration` data class allows you to customize the library's behavior:
+
+*   `isDebug: Boolean`:
+    *   Default: `false`.
+    *   If `true`, main thread access will trigger `StrictMode.noteSlowCall()` with details.
+    *   If `false`, main thread access will log a warning to Logcat.
+*   `emitMainThreadAccessEvents: Boolean`:
+    *   Default: `false`.
+    *   If `true`, the library emits `MainThreadAccessEvent` objects when main thread access is detected. These events can be observed using `StrictPreferences.watch()`.
+
+**Example `StrictPreferencesStartup` Implementation:**
+```kotlin
+import com.santimattius.android.strict.preferences.StrictPreferencesConfiguration
+import com.santimattius.android.strict.preferences.StrictPreferencesStartup
+
+class MyAppStrictConfig : StrictPreferencesStartup {
+    override fun getConfiguration(): StrictPreferencesConfiguration {
+        return StrictPreferencesConfiguration(
+            isDebug = true, // Enable StrictMode penalties during development
+            emitMainThreadAccessEvents = true // Enable event emission for custom logging
+        )
+    }
+}
+```
 ## 4. Detecting Violations
 
-### 4.1. Default Behavior
+### 4.1. Default Behavior (Based on Configuration)
 
-*   **Debug Builds (`isDebug = true` in configuration):**
-    When a SharedPreferences operation occurs on the main thread, `StrictMode.noteSlowCall()` is invoked with a message detailing the violation. This can result in log messages, screen flashes, or other penalties depending on your overall StrictMode setup.
-*   **Release Builds (`isDebug = false` in configuration):**
-    A warning message is logged to Logcat (tag: "StrictSharedPreferences") detailing the method and thread.
+*   **If `isDebug = true`**: When a SharedPreferences operation occurs on the main thread, `StrictMode.noteSlowCall()` is invoked. This can result in log messages, screen flashes, or other penalties depending on your global StrictMode setup.
+*   **If `isDebug = false`**: A warning message is logged to Logcat (tag: "StrictSharedPreferences") detailing the method and thread.
 
 ### 4.2. Custom Handling with `StrictPreferences.watch()`
 
-If you've enabled `emitMainThreadAccessEvents = true` in your `StrictPreferencesConfiguration`, you can observe detailed events for each main thread access. This is useful for custom logging, analytics, or displaying in-app warnings during development.
+If you've enabled `emitMainThreadAccessEvents = true` in `StrictPreferencesConfiguration`, you can observe detailed events for each main thread access. This is useful for custom logging, analytics, or displaying in-app warnings during development.
+
 ```kotlin
-// In your Application class, a ViewModel, or a dedicated utility class
 import com.santimattius.android.strict.preferences.StrictPreferences
 import com.santimattius.android.strict.preferences.internal.MainThreadAccessEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import android.util.Log // Added for Log.d
+import android.util.Log
 
 class MyAnrMonitor(private val applicationScope: CoroutineScope) {
 
@@ -237,35 +237,36 @@ class MyAnrMonitor(private val applicationScope: CoroutineScope) {
     }
 }
 
-// Usage in Application.onCreate()
-// val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Main) // Or your preferred scope
-// MyAnrMonitor(appScope).startMonitoring()
+// Example usage, typically in your Application class or a dedicated utility:
+// val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+// val anrMonitor = MyAnrMonitor(appScope)
+// anrMonitor.startMonitoring() // Start when appropriate
 ```
+
 ## 5. Understanding the Event: `MainThreadAccessEvent`
 
-When you use `StrictPreferences.watch()`, you receive `MainThreadAccessEvent` objects. This data class contains the following information:
+When you use `StrictPreferences.watch()`, you receive `MainThreadAccessEvent` objects. This data class contains:
 
-*   `methodName: String`: The name of the SharedPreferences method that was called (e.g., "getString", "edit", "Editor.commit").
-*   `timestamp: Long`: The time the access occurred (System.currentTimeMillis()).
-*   `threadName: String`: The name of the thread on which the access occurred (should be "main" or similar).
-*   `callerClassName: String?`: The fully qualified name of the class that made the SharedPreferences call.
-*   `callerMethodName: String?`: The name of the method within the caller class.
-*   `callerLineNumber: Int?`: The line number in the caller class where the SharedPreferences operation was invoked.
+*   `methodName: String`: The name of the SharedPreferences method called (e.g., "getString", "edit", "Editor.commit").
+*   `timestamp: Long`: Time of access (System.currentTimeMillis()).
+*   `threadName: String`: Name of the thread (should be "main" or similar).
+*   `callerClassName: String?`: Fully qualified name of the class that made the call.
+*   `callerMethodName: String?`: Name of the method within the caller class.
+*   `callerLineNumber: Int?`: Line number in the caller class.
 
-This detailed information is invaluable for quickly pinpointing the source of main thread SharedPreferences abuse in your codebase.
+This detailed information helps pinpoint the source of main thread SharedPreferences abuse.
 
 ## 6. How It Works (Briefly)
 
-StrictPreferences works by:
-1.  **Context Wrapping**: When initialized (typically via `StrictPreferences.start()` which uses `StrictPreferencesInitializer`), it registers an `Application.ActivityLifecycleCallbacks`. This callback (`OverrideActivityContext`) wraps the base context of each Activity with a `StrictContext`.
-2.  **Overriding `getSharedPreferences()`**: The `StrictContext` overrides the `getSharedPreferences()` method. Instead of returning a standard `SharedPreferences` instance, it returns an instance of `StrictSharedPreferences`.
-3.  **Intercepting Calls**: `StrictSharedPreferences` is a wrapper around the real `SharedPreferences` instance. It intercepts all method calls (like `getString()`, `edit()`, etc.).
-4.  **Thread Check**: Before delegating the call to the actual `SharedPreferences` instance, `StrictSharedPreferences` calls its `checkMainThread()` method. This method determines if the call is on the main thread and then acts according to the configured policies (logs, StrictMode, emits events).
-5.  **Editor Wrapping**: The `edit()` method of `StrictSharedPreferences` returns a `StrictEditor` which, in turn, checks `apply()` and `commit()` calls on the main thread.
+1.  **Initialization**: `StrictPreferencesInitializer` (run automatically by App Startup or manually via `StrictPreferences.start()`) sets up the library.
+    *   It fetches the `StrictPreferencesConfiguration` from your `StrictPreferencesStartup` implementation.
+    *   It registers an `Application.ActivityLifecycleCallbacks` (`OverrideActivityContext`).
+2.  **Context Wrapping**: `OverrideActivityContext` wraps the base context of each Activity with a `StrictContext`.
+3.  **Overriding `getSharedPreferences()`**: `StrictContext` overrides `getSharedPreferences()` to return an instance of `StrictSharedPreferences`.
+4.  **Intercepting Calls**: `StrictSharedPreferences` (and its internal `StrictEditor`) wraps the real `SharedPreferences` instance. It intercepts all method calls.
+5.  **Thread Check**: Before delegating, `StrictSharedPreferences` calls `checkMainThread()`. This method checks if the call is on the main thread and acts based on the `StrictPreferencesConfiguration` (logs, `StrictMode.noteSlowCall`, emits events).
 
-This mechanism ensures that most SharedPreferences access originating from Activities or the Application context is monitored.
-
-By using StrictPreferences, you can proactively identify and fix potential ANR-inducing SharedPreferences calls, leading to a smoother and more responsive application.
+This ensures most SharedPreferences access from Activities or the Application context is monitored.
 
 # Contributions
 

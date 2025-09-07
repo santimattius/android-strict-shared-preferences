@@ -1,7 +1,9 @@
+import com.vanniktech.maven.publish.SonatypeHost
+
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
-    id("maven-publish")
+    alias(libs.plugins.mavenPublish)
 }
 
 val androidMinSdkVersion: String by project
@@ -50,16 +52,39 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
 }
 
-afterEvaluate {
-    publishing {
-        publications {
-            // Creates a Maven publication called "release".
-            register<MavenPublication>("release") {
-                from(components["release"])
-                groupId = libraryGroupId
-                artifactId = libraryArtifactId
-                version = libraryVersion
+mavenPublishing {
+    publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
+
+    signAllPublications()
+
+    coordinates(libraryGroupId, libraryArtifactId, libraryVersion)
+
+    pom {
+        name = "strict-preferences"
+        description =
+            "StrictPreferences is an Android library designed to help developers detect and diagnose SharedPreferences access on the main application thread."
+        inceptionYear = "2025"
+        url = "https://github.com/santimattius/android-strict-shared-preferences/"
+        licenses {
+            license {
+                name = "The Apache License, Version 2.0"
+                url = "https://www.apache.org/licenses/LICENSE-2.0.txt"
+                distribution = "https://www.apache.org/licenses/LICENSE-2.0.txt"
             }
+        }
+        developers {
+            developer {
+                id = "santiago-mattiauda"
+                name = "Santiago Mattiauda"
+                url = "https://github.com/santimattius"
+            }
+        }
+        scm {
+            url = "https://github.com/santimattius/android-strict-shared-preferences/"
+            connection =
+                "scm:git:git://github.com/santimattius/android-strict-shared-preferences.git"
+            developerConnection =
+                "scm:git:ssh://git@github.com/santimattius/android-strict-shared-preferences.git"
         }
     }
 }

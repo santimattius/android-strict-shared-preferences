@@ -1,7 +1,9 @@
 package com.santimattius.android.strict.preferences
 
 import android.content.Context
+import android.util.Log
 import androidx.startup.AppInitializer
+import com.santimattius.android.strict.preferences.internal.LIB_TAG
 import com.santimattius.android.strict.preferences.internal.MainThreadAccessEvent
 import com.santimattius.android.strict.preferences.internal.StrictPreferencesInitializer
 import com.santimattius.android.strict.preferences.internal.StrictSharedPreferences
@@ -16,6 +18,12 @@ import kotlinx.coroutines.flow.onEach
  */
 object StrictPreferences {
 
+    private var _isStarted = false
+
+    internal fun startupInit() {
+        _isStarted = true
+    }
+
     /**
      * Initializes the StrictPreferences library using AndroidX App Startup.
      * This method ensures that [StrictPreferencesInitializer] is run, which sets up
@@ -29,6 +37,10 @@ object StrictPreferences {
     fun start(
         context: Context,
     ) {
+        if (_isStarted) {
+            Log.w(LIB_TAG, "StrictPreferences is already started")
+            return
+        }
         val appContext = context.applicationContext
         AppInitializer.getInstance(appContext)
             .initializeComponent(StrictPreferencesInitializer::class.java)

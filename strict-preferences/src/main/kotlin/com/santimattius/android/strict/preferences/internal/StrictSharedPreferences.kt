@@ -6,9 +6,9 @@ import android.os.Looper
 import android.os.StrictMode
 import android.util.Log
 import com.santimattius.android.strict.preferences.StrictPreferencesConfiguration
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
+import com.santimattius.android.strict.preferences.internal.StrictSharedPreferences.Companion.configuration
+import com.santimattius.android.strict.preferences.internal.StrictSharedPreferences.Companion.setConfiguration
+import com.santimattius.android.strict.preferences.internal.StrictSharedPreferences.Companion.setDebugMode
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -117,7 +117,7 @@ internal class StrictSharedPreferences private constructor(
     override fun edit(): SharedPreferences.Editor {
         checkMainThread("edit")
         //return StrictEditor(delegate.edit(), ::checkMainThread)
-        return delegate.edit( )
+        return delegate.edit()
     }
 
     /**
@@ -162,12 +162,11 @@ internal class StrictSharedPreferences private constructor(
      * @param threadName The name of the current thread (expected to be the main thread).
      */
     private fun handleMainThreadWarning(method: String, threadName: String) {
-        val message = "${TAG}: ⚠️ $method() on MAIN thread ($threadName)"
+        val message = "${LIB_TAG}: ⚠️ $method() on MAIN thread ($threadName)"
         if (configuration.isDebug) {
             StrictMode.noteSlowCall(message)
-        } else {
-            Log.w(TAG, message)
         }
+        Log.w(LIB_TAG, message)
     }
 
     /**
@@ -188,7 +187,10 @@ internal class StrictSharedPreferences private constructor(
             callerLineNumber = callerLineNumber
         )
         if (!_mainThreadAccessEventBus.tryEmit(event)) {
-            Log.w(TAG, "Failed to emit MainThreadAccessEvent for $method. Buffer might be full.")
+            Log.w(
+                LIB_TAG,
+                "Failed to emit MainThreadAccessEvent for $method. Buffer might be full."
+            )
         }
     }
 
@@ -226,23 +228,23 @@ internal class StrictSharedPreferences private constructor(
      */
     companion object Companion {
         /**
-         * Logcat tag used by [StrictSharedPreferences].
-         */
-        private const val TAG = "StrictSharedPreferences"
-
-        /**
          * Prefix for the class name of [StrictSharedPreferences] itself, used for stack trace filtering.
          * This helps in identifying calls originating from within this library versus external calls.
          */
-        private val OWN_CLASS_NAME_PREFIX = StrictSharedPreferences::class.java.name.substringBeforeLast('.')
+        private val OWN_CLASS_NAME_PREFIX =
+            StrictSharedPreferences::class.java.name.substringBeforeLast('.')
+
         /**
-         * Class name prefix for [com.santimattius.android.strict.preferences.StrictContext], used for stack trace filtering.
+         * Class name prefix for [com.santimattius.android.strict.preferences.internal.StrictContext], used for stack trace filtering.
          */
-        private const val STRICT_CONTEXT_CLASS_NAME_PREFIX = "com.santimattius.android.strict.preferences.StrictContext"
+        private const val STRICT_CONTEXT_CLASS_NAME_PREFIX =
+            "com.santimattius.android.strict.preferences.internal.StrictContext"
+
         /**
          * Class name prefix for [java.lang.Thread], used for stack trace filtering to ignore thread internals.
          */
         private const val JAVA_LANG_THREAD_PREFIX = "java.lang.Thread"
+
         /**
          * Class name prefix for Dalvik VM stack internal calls, used for stack trace filtering.
          */
@@ -263,6 +265,7 @@ internal class StrictSharedPreferences private constructor(
             extraBufferCapacity = 64, // Buffer size for events.
             onBufferOverflow = BufferOverflow.DROP_OLDEST // Strategy for handling buffer overflow.
         )
+
         /**
          * Publicly exposed [SharedFlow] for observing [MainThreadAccessEvent]s.
          * External components can collect events from this flow to monitor main thread SharedPreferences access.
@@ -276,8 +279,8 @@ internal class StrictSharedPreferences private constructor(
          *
          * @param debug True to enable debug mode, false otherwise.
          */
-        fun setDebugMode(debug: Boolean) {
-            configuration = configuration.copy(isDebug = debug)
+        fun setDebugMode(isDebug: Boolean) {
+            configuration = configuration.copy(isDebug = isDebug)
         }
 
         /**

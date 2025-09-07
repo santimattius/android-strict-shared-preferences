@@ -5,7 +5,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
 import android.os.Bundle
-import com.santimattius.android.strict.preferences.internal.StrictContext
+import android.util.Log
 
 /**
  * An [android.app.Application.ActivityLifecycleCallbacks] that overrides the base context of an [Activity]
@@ -31,7 +31,7 @@ internal class OverrideActivityContext : DefaultActivityLifecycleCallbacks() {
                 field.set(activity, StrictContext(base))
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(LIB_TAG, "Error overriding base context", e)
         }
     }
 }
