@@ -19,6 +19,9 @@ import kotlinx.coroutines.flow.onEach
 object StrictPreferences {
 
     private var _isStarted = false
+    private var _isManual = false
+    internal val isManual: Boolean
+        get() = _isManual
 
     internal fun startupInit() {
         _isStarted = true
@@ -36,11 +39,14 @@ object StrictPreferences {
      */
     fun start(
         context: Context,
+        configuration: StrictPreferencesConfiguration
     ) {
         if (_isStarted) {
             Log.w(LIB_TAG, "StrictPreferences is already started")
             return
         }
+        _isManual = true
+        StrictSharedPreferences.setConfiguration(configuration)
         val appContext = context.applicationContext
         AppInitializer.getInstance(appContext)
             .initializeComponent(StrictPreferencesInitializer::class.java)

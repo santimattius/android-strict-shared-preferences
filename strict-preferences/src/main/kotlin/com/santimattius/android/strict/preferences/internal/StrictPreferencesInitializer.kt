@@ -21,17 +21,15 @@ class StrictPreferencesInitializer : Initializer<Unit> {
      * @param context The application context.
      */
     override fun create(context: Context) {
-        if (context is StrictPreferencesStartup) {
+        if (context is StrictPreferencesStartup && !StrictPreferences.isManual) {
             val configuration = context.getConfiguration()
             StrictSharedPreferences.setConfiguration(configuration)
-            if (context is Application) {
-                context.registerActivityLifecycleCallbacks(OverrideActivityContext())
-            }
-            if (context is StrictPreferencesApplication) {
-                overridePreferenceManager(context)
-            }
-            StrictPreferences.startupInit()
         }
+        if (context is Application) {
+            context.registerActivityLifecycleCallbacks(OverrideActivityContext())
+        }
+        overridePreferenceManager(context)
+        StrictPreferences.startupInit()
     }
 
     /**

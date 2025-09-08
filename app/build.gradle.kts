@@ -44,12 +44,14 @@ android {
 
 dependencies {
 
-//    implementation(project(":strict-preferences"))
-    implementation("io.github.santimattius.android:strict-preferences:1.0.0-alpha01")
+     implementation(project(":strict-preferences"))
+    //implementation("io.github.santimattius.android:strict-preferences:1.0.0-alpha01")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
+
+    implementation(libs.androidx.startup.runtime)
 
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))

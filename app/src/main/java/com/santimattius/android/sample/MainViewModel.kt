@@ -6,11 +6,9 @@ import androidx.core.content.edit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 data class MainUiState(
     val text: String = "",
@@ -41,9 +39,9 @@ class MainViewModel(
         viewModelScope.launch {
             _state.value = _state.value.copy(isEnabled = isEnabled)
             //TODO: change to IO dispatcher
-            withContext(Dispatchers.IO){
+            //withContext(Dispatchers.IO){
                 sharedPreferences.edit { putBoolean("is_enabled", isEnabled) }
-            }
+            //}
         }
     }
 
