@@ -116,8 +116,7 @@ internal class StrictSharedPreferences private constructor(
      */
     override fun edit(): SharedPreferences.Editor {
         checkMainThread("edit")
-        //return StrictEditor(delegate.edit(), ::checkMainThread)
-        return delegate.edit()
+        return StrictEditor(delegate.edit(), ::checkMainThread)
     }
 
     /**
@@ -291,6 +290,10 @@ internal class StrictSharedPreferences private constructor(
          */
         fun setConfiguration(newConfiguration: StrictPreferencesConfiguration) {
             configuration = newConfiguration
+        }
+
+        internal fun getConfiguration(): StrictPreferencesConfiguration {
+            return configuration
         }
 
         /**
