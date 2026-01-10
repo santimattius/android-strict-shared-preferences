@@ -1,6 +1,6 @@
-# Strict Preferences
+[![Latest Release](https://maven-badges.sml.io/sonatype-central/io.github.santimattius.android/strict-preferences/badge.svg?subject=Latest%20Release&color=blue)](https://maven-badges.sml.io/sonatype-central/io.github.santimattius.android/strict-preferences/)
 
-## 1. Introduction
+# Strict Preferences
 
 StrictPreferences is an Android library designed to help developers detect and diagnose SharedPreferences access on the main application thread. Accessing SharedPreferences (especially for write operations or complex reads) on the main thread can lead to UI freezes and "Application Not Responding" (ANR) errors, negatively impacting user experience.
 
@@ -12,7 +12,7 @@ This library provides:
     *   Emitting detailed events for custom handling or analytics.
 *   Easy setup and integration into your Android application.
 
-## 2. Getting Started & Setup
+## Getting Started & Setup
 ### Installation
 
 You can add this library to your Android project using Gradle. Make sure to include the repository in your project-level `build.gradle` file:
@@ -22,7 +22,6 @@ dependencyResolutionManagement {
 	repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
 	repositories {
 		mavenCentral()
-		maven { url 'https://jitpack.io' }
 	}
 }
 ```
@@ -31,7 +30,7 @@ Then, add the dependency in your `build.gradle` file at the application level:
 
 ```groovy
 dependencies {
-   implementation "com.github.santimattius:android-strict-shared-preferences:${version}"
+   implementation("io.github.santimattius.android:strict-preferences:${version}")
    // or implementation "your-group:strict-preferences:${version}" if hosted elsewhere
 }
 
@@ -166,7 +165,7 @@ class MyApplication : Application(), StrictPreferencesStartup {
 ```
 In this manual setup, `StrictPreferences.start(this)` invokes `StrictPreferencesInitializer`, which then attempts to get the configuration from the passed `Context` (your `Application` instance) if it implements `StrictPreferencesStartup`.
 
-## 3. Configuration Details
+## Configuration Details
 
 The `StrictPreferencesConfiguration` data class allows you to customize the library's behavior:
 
@@ -192,14 +191,14 @@ class MyAppStrictConfig : StrictPreferencesStartup {
     }
 }
 ```
-## 4. Detecting Violations
+## Detecting Violations
 
-### 4.1. Default Behavior (Based on Configuration)
+### 1. Default Behavior (Based on Configuration)
 
 *   **If `isDebug = true`**: When a SharedPreferences operation occurs on the main thread, `StrictMode.noteSlowCall()` is invoked. This can result in log messages, screen flashes, or other penalties depending on your global StrictMode setup.
 *   **If `isDebug = false`**: A warning message is logged to Logcat (tag: "StrictSharedPreferences") detailing the method and thread.
 
-### 4.2. Custom Handling with `StrictPreferences.watch()`
+### 2. Custom Handling with `StrictPreferences.watch()`
 
 If you've enabled `emitMainThreadAccessEvents = true` in `StrictPreferencesConfiguration`, you can observe detailed events for each main thread access. This is useful for custom logging, analytics, or displaying in-app warnings during development.
 
@@ -235,7 +234,7 @@ class MyAnrMonitor(private val applicationScope: CoroutineScope) {
 // anrMonitor.startMonitoring() // Start when appropriate
 ```
 
-## 5. Understanding the Event: `MainThreadAccessEvent`
+## Understanding the Event: `MainThreadAccessEvent`
 
 When you use `StrictPreferences.watch()`, you receive `MainThreadAccessEvent` objects. This data class contains:
 
@@ -248,7 +247,7 @@ When you use `StrictPreferences.watch()`, you receive `MainThreadAccessEvent` ob
 
 This detailed information helps pinpoint the source of main thread SharedPreferences abuse.
 
-## 6. How It Works (Briefly)
+##  How It Works (Briefly)
 
 1.  **Initialization**: `StrictPreferencesInitializer` (run automatically by App Startup or manually via `StrictPreferences.start()`) sets up the library.
     *   It fetches the `StrictPreferencesConfiguration` from your `StrictPreferencesStartup` implementation.
@@ -273,4 +272,4 @@ Contributions are welcome! If you want to contribute to this library, please fol
 
 ## Contact
 
-If you have questions, issues, or suggestions regarding this library, feel free to [open a new issue](https://github.com/santimattius/{{repository}}/issues) on GitHub. We are here to help you!
+If you have questions, issues, or suggestions regarding this library, feel free to [open a new issue](https://github.com/santimattius/android-strict-shared-preferences/issues) on GitHub. We are here to help you!
