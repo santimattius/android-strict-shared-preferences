@@ -3,7 +3,7 @@
 ## Review Workload Forecast
 
 | Field | Value |
-|-------|-------|
+| ------- | ------- |
 | Estimated changed lines | 550–700 (7 new/modified prod files, 2 new test suites, build+docs) |
 | 400-line budget risk | High |
 | Chained PRs recommended | Yes |
@@ -19,7 +19,7 @@ Chain strategy: feature-branch-chain
 ### Suggested Work Units
 
 | Unit | Goal | Likely PR | PR base branch | Focused test command | Runtime harness | Rollback boundary |
-|------|------|-----------|-----------------|----------------------|-----------------|-------------------|
+| ------ | ------ | ----------- | ----------------- | ---------------------- | ----------------- | ------------------- |
 | 1 | New types + `CommitConcurrencyTracker` + `LifecycleStageTracker`, unit-tested in isolation | PR 1 | `queuedwork-apply-diagnostics` (tracker branch) | `./gradlew :strict-preferences:testDebugUnitTest --tests "*CommitConcurrencyTracker*" --tests "*LifecycleStageTracker*"` | N/A — pure JVM objects, no Android surface touched yet | Delete the 3 new files + their tests; nothing else references them |
 | 2 | `fileName` threaded through factory overloads; `emitPreferencesApplyEvents` flag added, unused | PR 2 | PR 1's branch | `./gradlew :strict-preferences:testDebugUnitTest --tests "*StrictSharedPreferencesFactory*" --tests "*StrictPreferencesConfiguration*"` | N/A — plumbing only, nothing emits yet | Revert `StrictContext.kt`, `StrictSharedPreferences.kt` ctor, `StrictPreferencesConfiguration.kt` to PR1 baseline |
 | 3 | Emission wiring, lifecycle callbacks, instrumented/static tests, docs | PR 3 | PR 2's branch | `./gradlew :strict-preferences:testDebugUnitTest --tests "*StrictPreferencesWatch*"` | `./gradlew :strict-preferences:connectedDebugAndroidTest` (device/emulator; exercises `ProcessLifecycleOwner` + concurrent `commit()` threads) | Revert emission calls in `StrictEditor`, drop callback registration in `StrictPreferencesInitializer`, remove dependency line; unused types stay (harmless per rollback plan) |
@@ -38,12 +38,12 @@ Only the `queuedwork-apply-diagnostics` tracker branch merges to `main`, once PR
 
 ## Phase 2: fileName Threading + Config Flag (PR 2)
 
-- [ ] 2.1 RED: `.../internal/StrictSharedPreferencesFactoryTest.kt` — `create(delegate, fileName)` carries name; `create(delegate)` yields `fileName == null`
-- [ ] 2.2 GREEN: modify `internal/StrictSharedPreferences.kt` — `fileName: String?` ctor param, additive `create(delegate, fileName)`, `getInstance` passes cached name
-- [ ] 2.3 GREEN: modify `internal/StrictContext.kt` — pass cached `name` as `fileName` into `create`
-- [ ] 2.4 RED: `StrictPreferencesConfigurationTest.kt` — default `emitPreferencesApplyEvents == false`; `withPreferencesApplyEvents()` flips it, positional callers still compile
-- [ ] 2.5 GREEN: modify `StrictPreferencesConfiguration.kt` — add `emitPreferencesApplyEvents: Boolean = false` as last ctor param + `withPreferencesApplyEvents()`
-- [ ] 2.6 REFACTOR: verify pre-existing `getSharedPreferences`/factory call sites compile without edits (spec scenario)
+- [x] 2.1 RED: `.../internal/StrictSharedPreferencesFactoryTest.kt` — `create(delegate, fileName)` carries name; `create(delegate)` yields `fileName == null`
+- [x] 2.2 GREEN: modify `internal/StrictSharedPreferences.kt` — `fileName: String?` ctor param, additive `create(delegate, fileName)`, `getInstance` passes cached name
+- [x] 2.3 GREEN: modify `internal/StrictContext.kt` — pass cached `name` as `fileName` into `create`
+- [x] 2.4 RED: `StrictPreferencesConfigurationTest.kt` — default `emitPreferencesApplyEvents == false`; `withPreferencesApplyEvents()` flips it, positional callers still compile
+- [x] 2.5 GREEN: modify `StrictPreferencesConfiguration.kt` — add `emitPreferencesApplyEvents: Boolean = false` as last ctor param + `withPreferencesApplyEvents()`
+- [x] 2.6 REFACTOR: verify pre-existing `getSharedPreferences`/factory call sites compile without edits (spec scenario)
 
 ## Phase 3: Emission Wiring & Lifecycle Integration (PR 3a)
 

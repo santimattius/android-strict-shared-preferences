@@ -29,7 +29,7 @@ data class MainThreadAccessEvent(
     val threadName: String = Thread.currentThread().name,
     val callerClassName: String? = null,
     val callerMethodName: String? = null,
-    val callerLineNumber: Int? = null
+    val callerLineNumber: Int? = null,
 )
 
 /**
@@ -42,9 +42,9 @@ data class MainThreadAccessEvent(
  * @constructor Creates a new instance of StrictSharedPreferences.
  */
 internal class StrictSharedPreferences private constructor(
-    private val delegate: SharedPreferences
+    private val delegate: SharedPreferences,
+    internal val fileName: String?,
 ) : SharedPreferences {
-
     // region SharedPreferences Overrides
     /**
      * @see SharedPreferences.getAll
@@ -57,7 +57,10 @@ internal class StrictSharedPreferences private constructor(
     /**
      * @see SharedPreferences.getString
      */
-    override fun getString(key: String?, defValue: String?): String? {
+    override fun getString(
+        key: String?,
+        defValue: String?,
+    ): String? {
         checkMainThread("getString")
         return delegate.getString(key, defValue)
     }
@@ -65,7 +68,10 @@ internal class StrictSharedPreferences private constructor(
     /**
      * @see SharedPreferences.getStringSet
      */
-    override fun getStringSet(key: String?, defValues: MutableSet<String>?): MutableSet<String>? {
+    override fun getStringSet(
+        key: String?,
+        defValues: MutableSet<String>?,
+    ): MutableSet<String>? {
         checkMainThread("getStringSet")
         return delegate.getStringSet(key, defValues)
     }
@@ -73,7 +79,10 @@ internal class StrictSharedPreferences private constructor(
     /**
      * @see SharedPreferences.getInt
      */
-    override fun getInt(key: String?, defValue: Int): Int {
+    override fun getInt(
+        key: String?,
+        defValue: Int,
+    ): Int {
         checkMainThread("getInt")
         return delegate.getInt(key, defValue)
     }
@@ -81,7 +90,10 @@ internal class StrictSharedPreferences private constructor(
     /**
      * @see SharedPreferences.getLong
      */
-    override fun getLong(key: String?, defValue: Long): Long {
+    override fun getLong(
+        key: String?,
+        defValue: Long,
+    ): Long {
         checkMainThread("getLong")
         return delegate.getLong(key, defValue)
     }
@@ -89,7 +101,10 @@ internal class StrictSharedPreferences private constructor(
     /**
      * @see SharedPreferences.getFloat
      */
-    override fun getFloat(key: String?, defValue: Float): Float {
+    override fun getFloat(
+        key: String?,
+        defValue: Float,
+    ): Float {
         checkMainThread("getFloat")
         return delegate.getFloat(key, defValue)
     }
@@ -97,7 +112,10 @@ internal class StrictSharedPreferences private constructor(
     /**
      * @see SharedPreferences.getBoolean
      */
-    override fun getBoolean(key: String?, defValue: Boolean): Boolean {
+    override fun getBoolean(
+        key: String?,
+        defValue: Boolean,
+    ): Boolean {
         checkMainThread("getBoolean")
         return delegate.getBoolean(key, defValue)
     }
@@ -160,7 +178,10 @@ internal class StrictSharedPreferences private constructor(
      * @param method The name of the SharedPreferences method.
      * @param threadName The name of the current thread (expected to be the main thread).
      */
-    private fun handleMainThreadWarning(method: String, threadName: String) {
+    private fun handleMainThreadWarning(
+        method: String,
+        threadName: String,
+    ) {
         val message = "${LIB_TAG}: ⚠️ $method() on MAIN thread ($threadName)"
         if (configuration.isDebug) {
             StrictMode.noteSlowCall(message)
@@ -175,20 +196,24 @@ internal class StrictSharedPreferences private constructor(
      * @param method The name of the SharedPreferences method.
      * @param threadName The name of the current thread.
      */
-    private fun emitMainThreadAccessEvent(method: String, threadName: String) {
+    private fun emitMainThreadAccessEvent(
+        method: String,
+        threadName: String,
+    ) {
         val (callerClassName, callerMethodName, callerLineNumber) = findCallerDetails()
 
-        val event = MainThreadAccessEvent(
-            methodName = method,
-            threadName = threadName,
-            callerClassName = callerClassName,
-            callerMethodName = callerMethodName,
-            callerLineNumber = callerLineNumber
-        )
+        val event =
+            MainThreadAccessEvent(
+                methodName = method,
+                threadName = threadName,
+                callerClassName = callerClassName,
+                callerMethodName = callerMethodName,
+                callerLineNumber = callerLineNumber,
+            )
         if (!_mainThreadAccessEventBus.tryEmit(event)) {
             Log.w(
                 LIB_TAG,
-                "Failed to emit MainThreadAccessEvent for $method. Buffer might be full."
+                "Failed to emit MainThreadAccessEvent for $method. Buffer might be full.",
             )
         }
     }
@@ -259,11 +284,12 @@ internal class StrictSharedPreferences private constructor(
          * Private [MutableSharedFlow] used to emit [MainThreadAccessEvent]s.
          * It is configured with no replay and a limited buffer, dropping oldest events on overflow.
          */
-        private val _mainThreadAccessEventBus = MutableSharedFlow<MainThreadAccessEvent>(
-            replay = 0, // New subscribers do not get past events.
-            extraBufferCapacity = 64, // Buffer size for events.
-            onBufferOverflow = BufferOverflow.DROP_OLDEST // Strategy for handling buffer overflow.
-        )
+        private val _mainThreadAccessEventBus =
+            MutableSharedFlow<MainThreadAccessEvent>(
+                replay = 0, // New subscribers do not get past events.
+                extraBufferCapacity = 64, // Buffer size for events.
+                onBufferOverflow = BufferOverflow.DROP_OLDEST, // Strategy for handling buffer overflow.
+            )
 
         /**
          * Publicly exposed [SharedFlow] for observing [MainThreadAccessEvent]s.
@@ -292,9 +318,7 @@ internal class StrictSharedPreferences private constructor(
             configuration = newConfiguration
         }
 
-        internal fun getConfiguration(): StrictPreferencesConfiguration {
-            return configuration
-        }
+        internal fun getConfiguration(): StrictPreferencesConfiguration = configuration
 
         /**
          * Returns a [StrictSharedPreferences] instance for the given [name] and [mode],
@@ -305,20 +329,32 @@ internal class StrictSharedPreferences private constructor(
          * @param mode The operating mode (e.g., [Context.MODE_PRIVATE]).
          * @return A [StrictSharedPreferences] instance.
          */
-        fun getInstance(context: Context, name: String, mode: Int): SharedPreferences {
-            return create(context.getSharedPreferences(name, mode))
-        }
+        fun getInstance(
+            context: Context,
+            name: String,
+            mode: Int,
+        ): SharedPreferences = create(context.getSharedPreferences(name, mode), name)
 
         /**
          * Creates a [StrictSharedPreferences] instance that wraps the given delegate [SharedPreferences].
          * This is the core factory method for creating instances of [StrictSharedPreferences].
          *
          * @param delegate The [SharedPreferences] instance to wrap.
+         * @return A new [StrictSharedPreferences] instance without file-name attribution.
+         */
+        fun create(delegate: SharedPreferences): SharedPreferences = create(delegate, fileName = null)
+
+        /**
+         * Creates a [StrictSharedPreferences] instance with a file name for diagnostics attribution.
+         *
+         * @param delegate The [SharedPreferences] instance to wrap.
+         * @param fileName The preferences file name, or `null` when it is unavailable.
          * @return A new [StrictSharedPreferences] instance.
          */
-        fun create(delegate: SharedPreferences): SharedPreferences {
-            return StrictSharedPreferences(delegate)
-        }
+        fun create(
+            delegate: SharedPreferences,
+            fileName: String?,
+        ): SharedPreferences = StrictSharedPreferences(delegate, fileName)
     }
 
     /**
@@ -333,9 +369,8 @@ internal class StrictSharedPreferences private constructor(
      */
     private class StrictEditor(
         private val delegateEditor: SharedPreferences.Editor,
-        private val checkMainThread: (String) -> Unit
+        private val checkMainThread: (String) -> Unit,
     ) : SharedPreferences.Editor by delegateEditor {
-
         /**
          * @see SharedPreferences.Editor.commit
          * Performs [checkMainThread] before delegating to the underlying editor's commit.
