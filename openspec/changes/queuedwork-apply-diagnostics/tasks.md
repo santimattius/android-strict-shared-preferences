@@ -28,13 +28,13 @@ Only the `queuedwork-apply-diagnostics` tracker branch merges to `main`, once PR
 
 ## Phase 1: Foundation Types & Tracking (PR 1)
 
-- [ ] 1.1 RED: `strict-preferences/src/test/.../internal/CommitConcurrencyTrackerTest.kt` — first `enter()` false, nested `enter()` true, `exit()` restores, distinct names independent, `null` always false/no entry
-- [ ] 1.2 GREEN: create `strict-preferences/src/main/kotlin/.../internal/CommitConcurrencyTracker.kt` per design interfaces
-- [ ] 1.3 RED: `.../internal/StrictPreferencesEventTest.kt` — `PreferencesApplyEvent` field shape, `LifecycleStage.wireName` values
-- [ ] 1.4 GREEN: create `.../internal/StrictPreferencesEvent.kt` (`sealed interface StrictPreferencesEvent`, `PreferencesApplyEvent`, `LifecycleStage` enum)
-- [ ] 1.5 RED: `.../internal/LifecycleStageTrackerTest.kt` — startup→foreground→background matrix, transition window open/expired, same-activity resume opens nothing (injected fake uptime)
-- [ ] 1.6 GREEN: create `.../internal/LifecycleStageTracker.kt` (tracker object, `LifecycleStageCallbacks`, injectable uptime, `ACTIVITY_TRANSITION_WINDOW_MS`)
-- [ ] 1.7 REFACTOR: dedupe window-check logic between tracker and its test fake; confirm no callback registration yet (deferred to Phase 3)
+- [x] 1.1 RED: `strict-preferences/src/test/.../internal/CommitConcurrencyTrackerTest.kt` — first `enter()` false, nested `enter()` true, `exit()` restores, distinct names independent, `null` always false/no entry
+- [x] 1.2 GREEN: create `strict-preferences/src/main/kotlin/.../internal/CommitConcurrencyTracker.kt` per design interfaces
+- [x] 1.3 RED: `.../internal/StrictPreferencesEventTest.kt` — `PreferencesApplyEvent` field shape, `LifecycleStage.wireName` values
+- [x] 1.4 GREEN: create `.../internal/StrictPreferencesEvent.kt` (`sealed interface StrictPreferencesEvent`, `PreferencesApplyEvent`, `LifecycleStage` enum)
+- [x] 1.5 RED: `.../internal/LifecycleStageTrackerTest.kt` — startup→foreground→background matrix, transition window open/expired, same-activity resume opens nothing (injected fake uptime)
+- [x] 1.6 GREEN: create `.../internal/LifecycleStageTracker.kt` (tracker object, `LifecycleStageCallbacks`, injectable uptime, `ACTIVITY_TRANSITION_WINDOW_MS`)
+- [x] 1.7 REFACTOR: dedupe window-check logic between tracker and its test fake; confirm no callback registration yet (deferred to Phase 3)
 
 ## Phase 2: fileName Threading + Config Flag (PR 2)
 
