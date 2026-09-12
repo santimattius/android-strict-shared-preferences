@@ -69,3 +69,44 @@ None. This work unit intentionally adds plumbing only: it does not widen the eve
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | 3.1–3.9 | Phase 3 JVM tests | Unit/structural | Correction RED: six failures from unmocked `Looper`; focused suite passed | Commit test failed before wiring; watcher contract extended | Robolectric focused + full suites passed | Enabled/disabled apply, single/concurrent commit, typed/deduped watcher paths | Zero-reflection grep passed |
 **Deviations / remaining / workload:** Removed broad JVM default-return stubs after observed `Looper.myLooper()` Android-stub failures; only the Phase 3 tests use Robolectric. Phase 4–5 remain unchecked. PR3a snapshot is reproducibly 420 additions+deletions; it is covered by the maintainer's accepted `size:exception` ceiling of 422.
+
+## Work Unit 3 / PR3b split — PR3b2
+
+**Status:** Complete — tasks 4.1–4.5 are checked; Phase 5 remains intentionally unstarted.
+
+### Split and PR boundary
+
+The maintainer split the former PR3b work unit into two reviewable slices:
+
+```text
+PR3a → PR3b1 (`134d75c`) → 📍 PR3b2 (current)
+```
+
+- **PR3b1 (committed):** 60-line `StrictEditor` chaining fix plus the 224-line `CommitConcurrencyInstrumentedTest` — **284 added source/test lines**.
+- **PR3b2 (current):** the 151-line `PreferencesApplyEventInstrumentedTest` plus the 39-line `ForbiddenFrameworkReflectionTest` — **190 added source/test lines**. Its only additional changes are cumulative OpenSpec task/progress evidence.
+- No production code, commit-concurrency test, README, KDoc, or other test is in the PR3b2 boundary. No commit was created for PR3b2.
+
+### Completed tasks and targeted evidence
+
+- [x] 4.1 `PreferencesApplyEventInstrumentedTest` covers named, disabled, and legacy `apply()` paths. `./gradlew :strict-preferences:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.santimattius.android.strict.preferences.internal.PreferencesApplyEventInstrumentedTest` passed all 3 tests on connected `Pixel_9(AVD) - 15`.
+- [x] 4.2–4.3 are delivered in PR3b1: concurrent-commit coverage and the 60-line wrapper-preservation fix.
+- [x] 4.4 `ForbiddenFrameworkReflectionTest` is the 39-line static guard. `./gradlew :strict-preferences:testDebugUnitTest --tests com.santimattius.android.strict.preferences.internal.ForbiddenFrameworkReflectionTest` passed.
+- [x] 4.5 `./gradlew :strict-preferences:testDebugUnitTest` passed, preserving the existing `MainThreadAccessEvent` consumer contract after bus widening.
+
+### Proven pre-existing full-suite limitation
+
+The earlier unfiltered `:strict-preferences:connectedDebugAndroidTest` run reached 7 tests on Pixel_9 (API 35); all six Phase 4 tests passed after the PR3b1 chaining fix. Its sole failure was the pre-existing, out-of-scope `ExampleInstrumentedTest.useAppContext` assertion: it expected `com.santimattius.android.library.test` but observed `com.santimattius.android.strict.preferences.test`. PR3b2 did not modify that test.
+
+### TDD Cycle Evidence
+
+| Task | RED | GREEN / verification | TRIANGULATE / REFACTOR |
+| --- | --- | --- | --- |
+| 4.1 | The chained `apply()` device case previously exposed the wrapper-delegation gap. | PR3b2's targeted Pixel_9 run passed named, disabled, and legacy paths (3/3). | Collector readiness is synchronized through `subscriptionCount`; positive cases use a 5-second latch and disabled uses a 250-ms no-event window. |
+| 4.2–4.3 | Device failure identified the delegated-editor path. | PR3b1 contains the wrapper fix and 224-line concurrency suite; all Phase 4 tests passed in the prior full connected run except the unrelated package assertion. | The split keeps the fix and its concurrency test together. |
+| 4.4–4.5 | Guard and unchanged consumer contract were selected before production changes. | Focused guard and full JVM suite pass. | Guard checks all main Kotlin/Java sources for framework-private reflection. |
+
+### Remaining tasks and workload
+
+- Phase 5 (5.1–5.2) remains unchecked and was not implemented.
+- **Chain strategy:** feature-branch-chain. **Current boundary:** PR3b2 only, based on PR3b1 (`134d75c`); follow-up PR3c is documentation only.
+- PR3b2's source/test payload is 190 added lines; its complete allowed-surface review diff is **241 additions + deletions** (151 apply test + 39 guard + 51 OpenSpec evidence), below the 400-line budget. No size exception is used.

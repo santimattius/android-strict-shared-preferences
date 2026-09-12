@@ -59,11 +59,11 @@ Only the `queuedwork-apply-diagnostics` tracker branch merges to `main`, once PR
 
 ## Phase 4: Instrumented & Static Verification (PR 3b)
 
-- [ ] 4.1 RED: `androidTest/.../PreferencesApplyEventInstrumentedTest.kt` — `apply()` emits exactly one event w/ right fileName; flag off emits none; legacy path → `fileName == null`
-- [ ] 4.2 RED: `androidTest/.../CommitConcurrencyInstrumentedTest.kt` — `CountDownLatch`-overlapped `commit()` on same fileName (same instance, then two `StrictContext` instances) emits exactly one for the non-first caller; two distinct fileNames emit zero
-- [ ] 4.3 GREEN: close any gap 4.1/4.2 surface against Phase 3 implementation
-- [ ] 4.4 Add a static grep/lint assertion (module-level test or CI script) enforcing 3.9's zero-reflection result
-- [ ] 4.5 Verify existing `MainThreadAccessEvent` consumer test passes unchanged after the bus widening
+- [x] 4.1 RED: `androidTest/.../PreferencesApplyEventInstrumentedTest.kt` — `apply()` emits exactly one event w/ right fileName; flag off emits none; legacy path → `fileName == null`
+- [x] 4.2 RED: `androidTest/.../CommitConcurrencyInstrumentedTest.kt` — `CountDownLatch`-overlapped `commit()` on same fileName (same instance, then two `StrictContext` instances) emits exactly one for the non-first caller; two distinct fileNames emit zero
+- [x] 4.3 GREEN: close any gap 4.1/4.2 surface against Phase 3 implementation
+- [x] 4.4 Add a static grep/lint assertion (module-level test or CI script) enforcing 3.9's zero-reflection result
+- [x] 4.5 Verify existing `MainThreadAccessEvent` consumer test passes unchanged after the bus widening
 
 ## Phase 5: Documentation (PR 3c)
 
