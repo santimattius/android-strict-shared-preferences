@@ -5,10 +5,12 @@ import android.util.Log
 import androidx.startup.AppInitializer
 import com.santimattius.android.strict.preferences.internal.LIB_TAG
 import com.santimattius.android.strict.preferences.internal.MainThreadAccessEvent
+import com.santimattius.android.strict.preferences.internal.PreferencesApplyEvent
 import com.santimattius.android.strict.preferences.internal.StrictPreferencesInitializer
 import com.santimattius.android.strict.preferences.internal.StrictSharedPreferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
@@ -64,10 +66,28 @@ object StrictPreferences {
      * @param onEvent A suspend function that will be invoked with each unique [MainThreadAccessEvent].
      */
     fun watch(coroutineScope: CoroutineScope, onEvent: suspend (MainThreadAccessEvent) -> Unit) {
-        StrictSharedPreferences
-            .mainThreadAccessEventBus
-            .distinctUntilChanged() // Avoid processing the same event multiple times if emitted rapidly
-            .onEach { onEvent(it) }
-            .launchIn(coroutineScope)
+            StrictSharedPreferences
+                .strictPreferencesEventBus
+                .filterIsInstance<MainThreadAccessEvent>()
+                .distinctUntilChanged() // Avoid processing the same event multiple times if emitted rapidly
+                .onEach { onEvent(it) }
+                .launchIn(coroutineScope)
+        }
+
+        /**
+         * Observes every [PreferencesApplyEvent] emitted by [StrictSharedPreferences].
+         *
+         * Unlike [watch], this stream deliberately does not deduplicate events: every `apply()`
+         * breadcrumb must remain observable, even when its fields match a preceding event.
+         */
+        fun watchApplyEvents(
+            coroutineScope: CoroutineScope,
+            onEvent: suspend (PreferencesApplyEvent) -> Unit,
+        ) {
+            StrictSharedPreferences
+                .strictPreferencesEventBus
+                .filterIsInstance<PreferencesApplyEvent>()
+                .onEach { onEvent(it) }
+                .launchIn(coroutineScope)
+        }
     }
-}

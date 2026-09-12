@@ -13,7 +13,9 @@ import java.util.concurrent.ConcurrentHashMap
  *
  * @param base The base context.
  */
-internal class StrictContext(base: Context) : ContextWrapper(base) {
+internal class StrictContext(
+    base: Context,
+) : ContextWrapper(base) {
     private val cache = ConcurrentHashMap<String, SharedPreferences>()
 
     /**
@@ -24,10 +26,13 @@ internal class StrictContext(base: Context) : ContextWrapper(base) {
      * @param mode The operating mode.
      * @return A [StrictSharedPreferences] instance.
      */
-    override fun getSharedPreferences(name: String?, mode: Int): SharedPreferences {
+    override fun getSharedPreferences(
+        name: String?,
+        mode: Int,
+    ): SharedPreferences {
         val key = name ?: "default"
         return cache.getOrPut(key) {
-            StrictSharedPreferences.create(super.getSharedPreferences(name, mode))
+            StrictSharedPreferences.create(super.getSharedPreferences(name, mode), name)
         }
     }
 }
