@@ -379,6 +379,66 @@ internal class StrictSharedPreferences private constructor(
         private val emitPreferencesApplyEvent: () -> Unit,
         private val fileName: String?,
     ) : SharedPreferences.Editor by delegateEditor {
+        // Editor mutations return the delegate by default. Preserve this wrapper so a chained
+        // `edit().putString(...).apply()` still reaches the diagnostics hooks below.
+        override fun putString(
+            key: String?,
+            value: String?,
+        ): SharedPreferences.Editor {
+            delegateEditor.putString(key, value)
+            return this
+        }
+
+        override fun putStringSet(
+            key: String?,
+            values: MutableSet<String>?,
+        ): SharedPreferences.Editor {
+            delegateEditor.putStringSet(key, values)
+            return this
+        }
+
+        override fun putInt(
+            key: String?,
+            value: Int,
+        ): SharedPreferences.Editor {
+            delegateEditor.putInt(key, value)
+            return this
+        }
+
+        override fun putLong(
+            key: String?,
+            value: Long,
+        ): SharedPreferences.Editor {
+            delegateEditor.putLong(key, value)
+            return this
+        }
+
+        override fun putFloat(
+            key: String?,
+            value: Float,
+        ): SharedPreferences.Editor {
+            delegateEditor.putFloat(key, value)
+            return this
+        }
+
+        override fun putBoolean(
+            key: String?,
+            value: Boolean,
+        ): SharedPreferences.Editor {
+            delegateEditor.putBoolean(key, value)
+            return this
+        }
+
+        override fun remove(key: String?): SharedPreferences.Editor {
+            delegateEditor.remove(key)
+            return this
+        }
+
+        override fun clear(): SharedPreferences.Editor {
+            delegateEditor.clear()
+            return this
+        }
+
         /**
          * @see SharedPreferences.Editor.commit
          * Performs [checkMainThread] before delegating to the underlying editor's commit.

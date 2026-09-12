@@ -11,7 +11,12 @@ import android.os.StrictMode
  * @property preferencesManagerOverrides Whether to override the default SharedPreferencesManager.
  * @property threadPolicy Custom StrictMode.ThreadPolicy to use. If null, a default policy will be used.
  * @property vmPolicy Custom StrictMode.VmPolicy to use. If null, a default policy will be used.
- * @property emitPreferencesApplyEvents Whether to emit diagnostic breadcrumbs for preferences apply calls.
+ * @property emitPreferencesApplyEvents Whether to emit diagnostic breadcrumbs for `apply()` and
+ * detected concurrent `commit()` calls. The events correlate wrapper-observed calls with a
+ * lifecycle snapshot; they do not observe `QueuedWork` or measure blocking. File-name-less
+ * legacy factory paths emit `apply()` events with `fileName = null` and do not report concurrent
+ * `commit()` breadcrumbs. Concurrent-commit detection is an approximation of wrapper-observed
+ * calls and can differ from framework-internal state.
  */
 data class StrictPreferencesConfiguration(
     val isDebug: Boolean = false,
