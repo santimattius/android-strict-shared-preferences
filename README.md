@@ -5,24 +5,26 @@
 StrictPreferences is an Android library designed to help developers detect and diagnose SharedPreferences access on the main application thread. Accessing SharedPreferences (especially for write operations or complex reads) on the main thread can lead to UI freezes and "Application Not Responding" (ANR) errors, negatively impacting user experience.
 
 This library provides:
-*   Automatic detection of SharedPreferences calls on the main thread.
-*   Configurable responses to main thread access:
-    *   Logging warnings to Logcat.
-    *   Triggering `StrictMode.noteSlowCall()` in debug builds.
-    *   Emitting detailed events for custom handling or analytics.
-*   Easy setup and integration into your Android application.
+
+* Automatic detection of SharedPreferences calls on the main thread.
+* Configurable responses to main thread access:
+  * Logging warnings to Logcat.
+  * Triggering `StrictMode.noteSlowCall()` in debug builds.
+  * Emitting detailed events for custom handling or analytics.
+* Easy setup and integration into your Android application.
 
 ## Getting Started & Setup
+
 ### Installation
 
 You can add this library to your Android project using Gradle. Make sure to include the repository in your project-level `build.gradle` file:
 
 ```groovy
 dependencyResolutionManagement {
-	repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-	repositories {
-		mavenCentral()
-	}
+ repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+ repositories {
+  mavenCentral()
+ }
 }
 ```
 
@@ -37,7 +39,6 @@ dependencies {
 ```
 
 Replace `version` with the latest version of the library.
-
 
 There are two primary ways to initialize the StrictPreferences library:
 
@@ -78,6 +79,7 @@ class MyApplication : Application(), StrictPreferencesStartup {
 The StrictPreferences library should include its `StrictPreferencesInitializer` in its `AndroidManifest.xml`, which will be merged into your app's manifest. This initializer will automatically find your `StrictPreferencesStartup` implementation.
 
 If you need to ensure it's present or manage its discovery, your merged `AndroidManifest.xml` should effectively include:
+
 ```xml
 <manifest xmlns:tools="http://schemas.android.com/tools" ...>
     <application ...>
@@ -101,6 +103,7 @@ If you need to ensure it's present or manage its discovery, your merged `Android
     </application>
 </manifest>
 ```
+
 *(Note: The exact meta-data name for your `Application` class might vary if you use a different class for `StrictPreferencesStartup`)*
 
 With this setup, the library initializes automatically using your provided configuration.
@@ -163,21 +166,26 @@ class MyApplication : Application(), StrictPreferencesStartup {
     }
 }
 ```
+
 In this manual setup, `StrictPreferences.start(this)` invokes `StrictPreferencesInitializer`, which then attempts to get the configuration from the passed `Context` (your `Application` instance) if it implements `StrictPreferencesStartup`.
 
 ## Configuration Details
 
 The `StrictPreferencesConfiguration` data class allows you to customize the library's behavior:
 
-*   `isDebug: Boolean`:
-    *   Default: `false`.
-    *   If `true`, main thread access will trigger `StrictMode.noteSlowCall()` with details.
-    *   If `false`, main thread access will log a warning to Logcat.
-*   `emitMainThreadAccessEvents: Boolean`:
-    *   Default: `false`.
-    *   If `true`, the library emits `MainThreadAccessEvent` objects when main thread access is detected. These events can be observed using `StrictPreferences.watch()`.
+* `isDebug: Boolean`:
+  * Default: `false`.
+  * If `true`, main thread access will trigger `StrictMode.noteSlowCall()` with details.
+  * If `false`, main thread access will log a warning to Logcat.
+* `emitMainThreadAccessEvents: Boolean`:
+  * Default: `false`.
+  * If `true`, the library emits `MainThreadAccessEvent` objects when main thread access is detected. These events can be observed using `StrictPreferences.watch()`.
+* `emitPreferencesApplyEvents: Boolean`:
+  * Default: `false`.
+  * If `true`, the library emits apply diagnostics breadcrumbs. See [Apply diagnostics breadcrumbs](#apply-diagnostics-breadcrumbs).
 
 **Example `StrictPreferencesStartup` Implementation:**
+
 ```kotlin
 import com.santimattius.android.strict.preferences.StrictPreferencesConfiguration
 import com.santimattius.android.strict.preferences.StrictPreferencesStartup
@@ -191,12 +199,29 @@ class MyAppStrictConfig : StrictPreferencesStartup {
     }
 }
 ```
+
+## Apply diagnostics breadcrumbs
+
+Enable `emitPreferencesApplyEvents` to record `apply()` calls and detected concurrent `commit()` calls with the preferences file name, lifecycle stage, timestamp, and calling thread. Observe them with `StrictPreferences.watchApplyEvents()` and cross-reference them with an ANR trace, StrictMode, or Perfetto.
+
+```kotlin
+val configuration = StrictPreferencesConfiguration(
+    emitPreferencesApplyEvents = true,
+)
+
+StrictPreferences.watchApplyEvents(applicationScope) { event ->
+    Log.d("Preferences", "${event.fileName}: ${event.lifecycleStage.wireName}")
+}
+```
+
+This feature is **not a QueuedWork block detector**. It does not observe `QueuedWork` or measure blocking; a breadcrumb only records the call seen by this library's wrapper.
+
 ## Detecting Violations
 
 ### 1. Default Behavior (Based on Configuration)
 
-*   **If `isDebug = true`**: When a SharedPreferences operation occurs on the main thread, `StrictMode.noteSlowCall()` is invoked. This can result in log messages, screen flashes, or other penalties depending on your global StrictMode setup.
-*   **If `isDebug = false`**: A warning message is logged to Logcat (tag: "StrictSharedPreferences") detailing the method and thread.
+* **If `isDebug = true`**: When a SharedPreferences operation occurs on the main thread, `StrictMode.noteSlowCall()` is invoked. This can result in log messages, screen flashes, or other penalties depending on your global StrictMode setup.
+* **If `isDebug = false`**: A warning message is logged to Logcat (tag: "StrictSharedPreferences") detailing the method and thread.
 
 ### 2. Custom Handling with `StrictPreferences.watch()`
 
@@ -238,24 +263,24 @@ class MyAnrMonitor(private val applicationScope: CoroutineScope) {
 
 When you use `StrictPreferences.watch()`, you receive `MainThreadAccessEvent` objects. This data class contains:
 
-*   `methodName: String`: The name of the SharedPreferences method called (e.g., "getString", "edit", "Editor.commit").
-*   `timestamp: Long`: Time of access (System.currentTimeMillis()).
-*   `threadName: String`: Name of the thread (should be "main" or similar).
-*   `callerClassName: String?`: Fully qualified name of the class that made the call.
-*   `callerMethodName: String?`: Name of the method within the caller class.
-*   `callerLineNumber: Int?`: Line number in the caller class.
+* `methodName: String`: The name of the SharedPreferences method called (e.g., "getString", "edit", "Editor.commit").
+* `timestamp: Long`: Time of access (System.currentTimeMillis()).
+* `threadName: String`: Name of the thread (should be "main" or similar).
+* `callerClassName: String?`: Fully qualified name of the class that made the call.
+* `callerMethodName: String?`: Name of the method within the caller class.
+* `callerLineNumber: Int?`: Line number in the caller class.
 
 This detailed information helps pinpoint the source of main thread SharedPreferences abuse.
 
-##  How It Works (Briefly)
+## How It Works (Briefly)
 
-1.  **Initialization**: `StrictPreferencesInitializer` (run automatically by App Startup or manually via `StrictPreferences.start()`) sets up the library.
-    *   It fetches the `StrictPreferencesConfiguration` from your `StrictPreferencesStartup` implementation.
-    *   It registers an `Application.ActivityLifecycleCallbacks` (`OverrideActivityContext`).
-2.  **Context Wrapping**: `OverrideActivityContext` wraps the base context of each Activity with a `StrictContext`.
-3.  **Overriding `getSharedPreferences()`**: `StrictContext` overrides `getSharedPreferences()` to return an instance of `StrictSharedPreferences`.
-4.  **Intercepting Calls**: `StrictSharedPreferences` (and its internal `StrictEditor`) wraps the real `SharedPreferences` instance. It intercepts all method calls.
-5.  **Thread Check**: Before delegating, `StrictSharedPreferences` calls `checkMainThread()`. This method checks if the call is on the main thread and acts based on the `StrictPreferencesConfiguration` (logs, `StrictMode.noteSlowCall`, emits events).
+1. **Initialization**: `StrictPreferencesInitializer` (run automatically by App Startup or manually via `StrictPreferences.start()`) sets up the library.
+    * It fetches the `StrictPreferencesConfiguration` from your `StrictPreferencesStartup` implementation.
+    * It registers an `Application.ActivityLifecycleCallbacks` (`OverrideActivityContext`).
+2. **Context Wrapping**: `OverrideActivityContext` wraps the base context of each Activity with a `StrictContext`.
+3. **Overriding `getSharedPreferences()`**: `StrictContext` overrides `getSharedPreferences()` to return an instance of `StrictSharedPreferences`.
+4. **Intercepting Calls**: `StrictSharedPreferences` (and its internal `StrictEditor`) wraps the real `SharedPreferences` instance. It intercepts all method calls.
+5. **Thread Check**: Before delegating, `StrictSharedPreferences` calls `checkMainThread()`. This method checks if the call is on the main thread and acts based on the `StrictPreferencesConfiguration` (logs, `StrictMode.noteSlowCall`, emits events).
 
 This ensures most SharedPreferences access from Activities or the Application context is monitored.
 
