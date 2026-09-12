@@ -110,3 +110,45 @@ The earlier unfiltered `:strict-preferences:connectedDebugAndroidTest` run reach
 - Phase 5 (5.1–5.2) remains unchecked and was not implemented.
 - **Chain strategy:** feature-branch-chain. **Current boundary:** PR3b2 only, based on PR3b1 (`134d75c`); follow-up PR3c is documentation only.
 - PR3b2's source/test payload is 190 added lines; its complete allowed-surface review diff is **241 additions + deletions** (151 apply test + 39 guard + 51 OpenSpec evidence), below the 400-line budget. No size exception is used.
+
+## Work Unit 3 / PR3c
+
+**Status:** Complete — tasks 5.1–5.2. Documentation/KDoc only; no behavior change.
+
+### Completed tasks
+
+- [x] 5.1 Added concise README usage for `emitPreferencesApplyEvents` and `watchApplyEvents()`, with breadcrumb-only framing and an explicit statement that it is not a QueuedWork block detector.
+- [x] 5.2 Documented `PreferencesApplyEvent`, `emitPreferencesApplyEvents`, and `CommitConcurrencyTracker`: legacy factory paths may yield `fileName = null`, do not report concurrent-`commit()` breadcrumbs, and wrapper-observed concurrency is approximate rather than framework visibility.
+
+### Files changed
+
+- `README.md`
+- `strict-preferences/src/main/kotlin/com/santimattius/android/strict/preferences/internal/StrictPreferencesEvent.kt`
+- `strict-preferences/src/main/kotlin/com/santimattius/android/strict/preferences/StrictPreferencesConfiguration.kt`
+- `strict-preferences/src/main/kotlin/com/santimattius/android/strict/preferences/internal/CommitConcurrencyTracker.kt`
+- `openspec/changes/queuedwork-apply-diagnostics/tasks.md`
+- `openspec/changes/queuedwork-apply-diagnostics/apply-progress.md`
+
+### Verification evidence
+
+1. `./gradlew :strict-preferences:testDebugUnitTest` — **BUILD SUCCESSFUL** (16 actionable tasks: 4 executed, 12 up-to-date).
+2. `git diff --check` — passed with no whitespace errors.
+3. `git diff --word-diff=porcelain -- README.md strict-preferences/src/main/kotlin/com/santimattius/android/strict/preferences/internal/StrictPreferencesEvent.kt strict-preferences/src/main/kotlin/com/santimattius/android/strict/preferences/StrictPreferencesConfiguration.kt strict-preferences/src/main/kotlin/com/santimattius/android/strict/preferences/internal/CommitConcurrencyTracker.kt openspec/changes/queuedwork-apply-diagnostics/tasks.md openspec/changes/queuedwork-apply-diagnostics/apply-progress.md` — confirmed the production Kotlin changes are KDoc plus non-semantic formatting; no executable statements, declarations, or signatures changed, so production bytecode behavior is unchanged.
+
+### TDD Cycle Evidence
+
+| Task | RED | GREEN | TRIANGULATE | REFACTOR |
+| --- | --- | --- | --- | --- |
+| 5.1–5.2 | Not applicable: the assigned work is passive README/KDoc documentation only, with no production behavior to specify through a failing test. | Full required JVM unit suite passed after the documentation edits. | Documentation names both no-file-name and approximate-concurrency limits across the event, flag, and tracker surfaces. | Reviewed the source diff to confirm only documentation and non-semantic formatting changed; no behavior refactor was needed. |
+
+### Deviations and remaining tasks
+
+- No deviations from the documentation design.
+- No implementation-owned tasks remain for this change.
+
+### Workload / PR boundary
+
+- **Chain strategy:** feature-branch-chain.
+- **Current boundary:** PR3c only, based on `b74b0f8`; README and KDoc limits plus OpenSpec completion evidence. No production behavior, tests, dependencies, or instrumentation changes are included.
+- **Review budget:** below the 400-line budget; no size exception is used.
+- **Commit state:** no commit created.

@@ -67,5 +67,5 @@ Only the `queuedwork-apply-diagnostics` tracker branch merges to `main`, once PR
 
 ## Phase 5: Documentation (PR 3c)
 
-- [ ] 5.1 Update `README.md` — breadcrumb-only framing, explicit "not a QueuedWork block detector" statement
-- [ ] 5.2 Add KDoc to `PreferencesApplyEvent`, `emitPreferencesApplyEvents`, `CommitConcurrencyTracker` — null-fileName limitation, approximate-concurrency caveat
+- [x] 5.1 Update `README.md` — breadcrumb-only framing, explicit "not a QueuedWork block detector" statement
+- [x] 5.2 Add KDoc to `PreferencesApplyEvent`, `emitPreferencesApplyEvents`, `CommitConcurrencyTracker` — null-fileName limitation, approximate-concurrency caveat
