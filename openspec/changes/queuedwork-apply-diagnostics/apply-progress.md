@@ -55,3 +55,17 @@ None. This work unit intentionally adds plumbing only: it does not widen the eve
 - **Current boundary:** PR2 only — Phase 2 file-name threading and unused configuration flag; based on PR1 and followed by PR3.
 - **Out of scope:** all Phase 3+ event-bus, apply/commit emission, lifecycle, dependency, instrumentation, static-lint, and documentation changes.
 - **Review budget:** within the user-approved 600 changed-line budget.
+
+## Work Unit 3 / PR3a
+
+**Status:** Complete — tasks 3.1–3.9.
+**Completed tasks:** Apply/commit/watcher RED tests; bus/apply emission; commit tracker wiring; split watchers; lifecycle registration; lifecycle-process dependency; reflection check.
+**Files changed:** `StrictSharedPreferences.kt`, `StrictPreferences.kt`, `StrictPreferencesInitializer.kt`, focused JVM tests, catalog/build, `tasks.md`.
+**Tests:** Focused Phase 3 JVM suite passed; `./gradlew :strict-preferences:testDebugUnitTest` passed; reflection grep and `git diff --check` passed.
+
+### TDD Cycle Evidence
+
+| Task | Test File | Layer | Safety Net | RED | GREEN | TRIANGULATE | REFACTOR |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 3.1–3.9 | Phase 3 JVM tests | Unit/structural | Correction RED: six failures from unmocked `Looper`; focused suite passed | Commit test failed before wiring; watcher contract extended | Robolectric focused + full suites passed | Enabled/disabled apply, single/concurrent commit, typed/deduped watcher paths | Zero-reflection grep passed |
+**Deviations / remaining / workload:** Removed broad JVM default-return stubs after observed `Looper.myLooper()` Android-stub failures; only the Phase 3 tests use Robolectric. Phase 4–5 remain unchecked. PR3a snapshot is reproducibly 420 additions+deletions; it is covered by the maintainer's accepted `size:exception` ceiling of 422.

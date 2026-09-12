@@ -4,6 +4,9 @@ import android.app.Application
 import android.content.Context
 import android.os.StrictMode
 import android.util.Log
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.startup.Initializer
 import com.santimattius.android.strict.preferences.StrictPreferences
 import com.santimattius.android.strict.preferences.StrictPreferencesConfiguration
@@ -27,7 +30,6 @@ import com.santimattius.android.strict.preferences.StrictPreferencesStartup
  * the StrictPreferences library when the application starts.
  */
 class StrictPreferencesInitializer : Initializer<Unit> {
-
     /**
      * Initializes [StrictSharedPreferences] in the application.
      *
@@ -40,6 +42,18 @@ class StrictPreferencesInitializer : Initializer<Unit> {
         }
         if (context is Application) {
             context.registerActivityLifecycleCallbacks(OverrideActivityContext())
+            context.registerActivityLifecycleCallbacks(LifecycleStageCallbacks())
+            ProcessLifecycleOwner.get().lifecycle.addObserver(
+                object : DefaultLifecycleObserver {
+                    override fun onStart(owner: LifecycleOwner) {
+                        LifecycleStageTracker.onProcessStart()
+                    }
+
+                    override fun onStop(owner: LifecycleOwner) {
+                        LifecycleStageTracker.onProcessStop()
+                    }
+                },
+            )
         }
         val configuration = StrictSharedPreferences.getConfiguration()
         setupStrictMode(configuration)
@@ -63,16 +77,16 @@ class StrictPreferencesInitializer : Initializer<Unit> {
     /**
      * @return A list of dependencies for this initializer. None in this case.
      */
-    override fun dependencies(): List<Class<out Initializer<*>?>?> {
-        return emptyList()
-    }
+    override fun dependencies(): List<Class<out Initializer<*>?>?> = emptyList()
 
     // Replace default SharedPreferences from PreferenceManager
     private fun overridePreferenceManager(context: Context) {
         try {
-            val prefs = StrictSharedPreferences.create(
-                context.getSharedPreferences("default", Context.MODE_PRIVATE)
-            )
+            val prefs =
+                StrictSharedPreferences.create(
+                    context.getSharedPreferences("default", Context.MODE_PRIVATE),
+                    "default",
+                )
             val prefManagerClass = Class.forName("androidx.preference.PreferenceManager")
             val field = prefManagerClass.getDeclaredField("sSharedPreferences")
             field.isAccessible = true
