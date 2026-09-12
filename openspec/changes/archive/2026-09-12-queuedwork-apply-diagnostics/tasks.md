@@ -47,25 +47,25 @@ Only the `queuedwork-apply-diagnostics` tracker branch merges to `main`, once PR
 
 ## Phase 3: Emission Wiring & Lifecycle Integration (PR 3a)
 
-- [ ] 3.1 RED: `StrictSharedPreferencesTest.kt` — `apply()` emits one `PreferencesApplyEvent` on `watchApplyEvents()` with fileName/stage/threadName when flag on; zero when off
-- [ ] 3.2 GREEN: modify `internal/StrictSharedPreferences.kt` — widen bus to `MutableSharedFlow<StrictPreferencesEvent>`, add `emitPreferencesApplyEvent()`, `StrictEditor` takes `fileName`, emits in `apply()`
-- [ ] 3.3 RED: `StrictEditorCommitTest.kt` — single caller emits zero; concurrent `enter()==true` path emits exactly one, before `delegateEditor.commit()` returns
-- [ ] 3.4 GREEN: implement `StrictEditor.commit()` per design (`enter`/emit/`finally exit` wrapping `delegateEditor.commit()`)
-- [ ] 3.5 RED: `StrictPreferencesWatchTest.kt` — `watch()` still filters/dedupes only `MainThreadAccessEvent`; `watchApplyEvents()` filters only `PreferencesApplyEvent`, no dedup
-- [ ] 3.6 GREEN: modify `StrictPreferences.kt` — split `watch()`, add `watchApplyEvents(scope, onEvent)`
-- [ ] 3.7 GREEN: modify `internal/StrictPreferencesInitializer.kt` — register `LifecycleStageCallbacks` + `ProcessLifecycleOwner` observer, `"default"` fileName in `overridePreferenceManager`
-- [ ] 3.8 GREEN: add `androidx.lifecycle:lifecycle-process` alias to `gradle/libs.versions.toml` (reuse `lifecycle = 2.9.4`) and dependency to `strict-preferences/build.gradle.kts`
-- [ ] 3.9 REFACTOR: grep module sources; confirm zero reflective `QueuedWork`/`SharedPreferencesImpl` references
+- [x] 3.1 RED: `StrictSharedPreferencesTest.kt` — `apply()` emits one `PreferencesApplyEvent` on `watchApplyEvents()` with fileName/stage/threadName when flag on; zero when off
+- [x] 3.2 GREEN: modify `internal/StrictSharedPreferences.kt` — widen bus to `MutableSharedFlow<StrictPreferencesEvent>`, add `emitPreferencesApplyEvent()`, `StrictEditor` takes `fileName`, emits in `apply()`
+- [x] 3.3 RED: `StrictEditorCommitTest.kt` — single caller emits zero; concurrent `enter()==true` path emits exactly one, before `delegateEditor.commit()` returns
+- [x] 3.4 GREEN: implement `StrictEditor.commit()` per design (`enter`/emit/`finally exit` wrapping `delegateEditor.commit()`)
+- [x] 3.5 RED: `StrictPreferencesWatchTest.kt` — `watch()` still filters/dedupes only `MainThreadAccessEvent`; `watchApplyEvents()` filters only `PreferencesApplyEvent`, no dedup
+- [x] 3.6 GREEN: modify `StrictPreferences.kt` — split `watch()`, add `watchApplyEvents(scope, onEvent)`
+- [x] 3.7 GREEN: modify `internal/StrictPreferencesInitializer.kt` — register `LifecycleStageCallbacks` + `ProcessLifecycleOwner` observer, `"default"` fileName in `overridePreferenceManager`
+- [x] 3.8 GREEN: add `androidx.lifecycle:lifecycle-process` alias to `gradle/libs.versions.toml` (reuse `lifecycle = 2.9.4`) and dependency to `strict-preferences/build.gradle.kts`
+- [x] 3.9 REFACTOR: grep module sources; confirm zero reflective `QueuedWork`/`SharedPreferencesImpl` references
 
 ## Phase 4: Instrumented & Static Verification (PR 3b)
 
-- [ ] 4.1 RED: `androidTest/.../PreferencesApplyEventInstrumentedTest.kt` — `apply()` emits exactly one event w/ right fileName; flag off emits none; legacy path → `fileName == null`
-- [ ] 4.2 RED: `androidTest/.../CommitConcurrencyInstrumentedTest.kt` — `CountDownLatch`-overlapped `commit()` on same fileName (same instance, then two `StrictContext` instances) emits exactly one for the non-first caller; two distinct fileNames emit zero
-- [ ] 4.3 GREEN: close any gap 4.1/4.2 surface against Phase 3 implementation
-- [ ] 4.4 Add a static grep/lint assertion (module-level test or CI script) enforcing 3.9's zero-reflection result
-- [ ] 4.5 Verify existing `MainThreadAccessEvent` consumer test passes unchanged after the bus widening
+- [x] 4.1 RED: `androidTest/.../PreferencesApplyEventInstrumentedTest.kt` — `apply()` emits exactly one event w/ right fileName; flag off emits none; legacy path → `fileName == null`
+- [x] 4.2 RED: `androidTest/.../CommitConcurrencyInstrumentedTest.kt` — `CountDownLatch`-overlapped `commit()` on same fileName (same instance, then two `StrictContext` instances) emits exactly one for the non-first caller; two distinct fileNames emit zero
+- [x] 4.3 GREEN: close any gap 4.1/4.2 surface against Phase 3 implementation
+- [x] 4.4 Add a static grep/lint assertion (module-level test or CI script) enforcing 3.9's zero-reflection result
+- [x] 4.5 Verify existing `MainThreadAccessEvent` consumer test passes unchanged after the bus widening
 
 ## Phase 5: Documentation (PR 3c)
 
-- [ ] 5.1 Update `README.md` — breadcrumb-only framing, explicit "not a QueuedWork block detector" statement
-- [ ] 5.2 Add KDoc to `PreferencesApplyEvent`, `emitPreferencesApplyEvents`, `CommitConcurrencyTracker` — null-fileName limitation, approximate-concurrency caveat
+- [x] 5.1 Update `README.md` — breadcrumb-only framing, explicit "not a QueuedWork block detector" statement
+- [x] 5.2 Add KDoc to `PreferencesApplyEvent`, `emitPreferencesApplyEvents`, `CommitConcurrencyTracker` — null-fileName limitation, approximate-concurrency caveat

@@ -30,7 +30,7 @@ data class MainThreadAccessEvent(
     val callerClassName: String? = null,
     val callerMethodName: String? = null,
     val callerLineNumber: Int? = null,
-)
+) : StrictPreferencesEvent
 
 /**
  * A [android.content.SharedPreferences] wrapper that enforces configured policies on main thread access.
@@ -134,7 +134,7 @@ internal class StrictSharedPreferences private constructor(
      */
     override fun edit(): SharedPreferences.Editor {
         checkMainThread("edit")
-        return StrictEditor(delegate.edit(), ::checkMainThread)
+        return StrictEditor(delegate.edit(), ::checkMainThread, ::emitPreferencesApplyEvent, fileName)
     }
 
     /**
@@ -210,11 +210,20 @@ internal class StrictSharedPreferences private constructor(
                 callerMethodName = callerMethodName,
                 callerLineNumber = callerLineNumber,
             )
-        if (!_mainThreadAccessEventBus.tryEmit(event)) {
+        if (!_strictPreferencesEventBus.tryEmit(event)) {
             Log.w(
                 LIB_TAG,
                 "Failed to emit MainThreadAccessEvent for $method. Buffer might be full.",
             )
+        }
+    }
+
+    private fun emitPreferencesApplyEvent() {
+        if (!configuration.emitPreferencesApplyEvents) return
+
+        val event = PreferencesApplyEvent(fileName, LifecycleStageTracker.currentStage())
+        if (!_strictPreferencesEventBus.tryEmit(event)) {
+            Log.w(LIB_TAG, "Failed to emit PreferencesApplyEvent. Buffer might be full.")
         }
     }
 
@@ -281,21 +290,18 @@ internal class StrictSharedPreferences private constructor(
         private var configuration = StrictPreferencesConfiguration(isDebug = false)
 
         /**
-         * Private [MutableSharedFlow] used to emit [MainThreadAccessEvent]s.
+         * Private [MutableSharedFlow] used to emit all [StrictPreferencesEvent]s.
          * It is configured with no replay and a limited buffer, dropping oldest events on overflow.
          */
-        private val _mainThreadAccessEventBus =
-            MutableSharedFlow<MainThreadAccessEvent>(
+        private val _strictPreferencesEventBus =
+            MutableSharedFlow<StrictPreferencesEvent>(
                 replay = 0, // New subscribers do not get past events.
                 extraBufferCapacity = 64, // Buffer size for events.
                 onBufferOverflow = BufferOverflow.DROP_OLDEST, // Strategy for handling buffer overflow.
             )
 
-        /**
-         * Publicly exposed [SharedFlow] for observing [MainThreadAccessEvent]s.
-         * External components can collect events from this flow to monitor main thread SharedPreferences access.
-         */
-        val mainThreadAccessEventBus = _mainThreadAccessEventBus.asSharedFlow()
+        /** Publicly exposed [SharedFlow] for observing StrictPreferences events. */
+        val strictPreferencesEventBus = _strictPreferencesEventBus.asSharedFlow()
 
         /**
          * Sets the debug mode for [StrictSharedPreferences].
@@ -370,14 +376,82 @@ internal class StrictSharedPreferences private constructor(
     private class StrictEditor(
         private val delegateEditor: SharedPreferences.Editor,
         private val checkMainThread: (String) -> Unit,
+        private val emitPreferencesApplyEvent: () -> Unit,
+        private val fileName: String?,
     ) : SharedPreferences.Editor by delegateEditor {
+        // Editor mutations return the delegate by default. Preserve this wrapper so a chained
+        // `edit().putString(...).apply()` still reaches the diagnostics hooks below.
+        override fun putString(
+            key: String?,
+            value: String?,
+        ): SharedPreferences.Editor {
+            delegateEditor.putString(key, value)
+            return this
+        }
+
+        override fun putStringSet(
+            key: String?,
+            values: MutableSet<String>?,
+        ): SharedPreferences.Editor {
+            delegateEditor.putStringSet(key, values)
+            return this
+        }
+
+        override fun putInt(
+            key: String?,
+            value: Int,
+        ): SharedPreferences.Editor {
+            delegateEditor.putInt(key, value)
+            return this
+        }
+
+        override fun putLong(
+            key: String?,
+            value: Long,
+        ): SharedPreferences.Editor {
+            delegateEditor.putLong(key, value)
+            return this
+        }
+
+        override fun putFloat(
+            key: String?,
+            value: Float,
+        ): SharedPreferences.Editor {
+            delegateEditor.putFloat(key, value)
+            return this
+        }
+
+        override fun putBoolean(
+            key: String?,
+            value: Boolean,
+        ): SharedPreferences.Editor {
+            delegateEditor.putBoolean(key, value)
+            return this
+        }
+
+        override fun remove(key: String?): SharedPreferences.Editor {
+            delegateEditor.remove(key)
+            return this
+        }
+
+        override fun clear(): SharedPreferences.Editor {
+            delegateEditor.clear()
+            return this
+        }
+
         /**
          * @see SharedPreferences.Editor.commit
          * Performs [checkMainThread] before delegating to the underlying editor's commit.
          */
         override fun commit(): Boolean {
             checkMainThread("Editor.commit")
-            return delegateEditor.commit()
+            val concurrent = CommitConcurrencyTracker.enter(fileName)
+            try {
+                if (concurrent) emitPreferencesApplyEvent()
+                return delegateEditor.commit()
+            } finally {
+                CommitConcurrencyTracker.exit(fileName)
+            }
         }
 
         /**
@@ -386,6 +460,7 @@ internal class StrictSharedPreferences private constructor(
          */
         override fun apply() {
             checkMainThread("Editor.apply")
+            emitPreferencesApplyEvent()
             delegateEditor.apply()
         }
     }

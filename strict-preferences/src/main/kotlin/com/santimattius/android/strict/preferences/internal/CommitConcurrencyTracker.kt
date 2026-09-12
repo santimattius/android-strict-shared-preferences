@@ -9,7 +9,9 @@ import java.util.concurrent.atomic.AtomicInteger
  * This is purely a *correlation breadcrumb* helper: it counts, per [String] file name, how
  * many `commit()` calls made through this library's own wrapper are currently in flight. It
  * never reads AOSP's private `SharedPreferencesImpl.mDiskWritesInFlight` state and never uses
- * reflection into `SharedPreferencesImpl`/`QueuedWork`.
+ * reflection into `SharedPreferencesImpl`/`QueuedWork`. Its concurrency result is therefore an
+ * approximation of wrapper-observed `commit()` calls: it can differ from framework-internal
+ * write state and does not establish that `QueuedWork` blocked.
  *
  * The registry is process-global (not per-instance) because `OverrideActivityContext` can
  * install a fresh `StrictSharedPreferences` wrapper per Activity while all of them back the
@@ -26,7 +28,6 @@ import java.util.concurrent.atomic.AtomicInteger
  * instances backed by different files never collide in a shared bucket.
  */
 internal object CommitConcurrencyTracker {
-
     private val counters = ConcurrentHashMap<String, AtomicInteger>()
 
     /**
